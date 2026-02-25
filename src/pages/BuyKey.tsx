@@ -7,7 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 
 const PKG_META: Record<string, { emoji: string; badge?: string; badgeColor?: string; features: string[] }> = {
   "1day": { emoji: "📅", badge: "🧧 Lì Xì 1 Key", badgeColor: "#ff6a6a", features: ["24 giờ sử dụng", "1 thiết bị đồng thời", "Cập nhật liên tục", "Hỗ trợ 24/7"] },
-  "3days": { emoji: "🔥", badge: "💰 TIẾT KIỆM 32%", badgeColor: "#ff8c00", features: ["3 ngày sử dụng", "1 thiết bị đồng thời", "Ưu tiên hỗ trợ", "Chỉ " + formatVND(70000 / 3) + "/ngày"] },
+  "3days": { emoji: "🔥", badge: "💰 TIẾT KIỆM 32%", badgeColor: "#ff8c00", features: ["3 ngày sử dụng", "1 thiết bị đồng thời", "Ưu tiên hỗ trợ", "Chỉ " + formatVND(Math.round(55000 / 3)) + "/ngày"] },
   "1week": { emoji: "⭐", badge: "🎉 TIẾT KIỆM 55%", badgeColor: "#00c3ff", features: ["7 ngày sử dụng", "1 thiết bị đồng thời", "Hỗ trợ ưu tiên"] },
   "1month": { emoji: "🏆", badge: "🏅 TIẾT KIỆM 76%", badgeColor: "#00ff88", features: ["30 ngày sử dụng", "1 thiết bị đồng thời", "Hỗ trợ 24/7"] },
   "lifetime": { emoji: "👑", badge: "💎 VIP TRỌN ĐỜI", badgeColor: "#ffd700", features: ["Sử dụng vĩnh viễn", "1 thiết bị đồng thời", "Hỗ trợ VIP ưu tiên", "Cập nhật miễn phí"] },
