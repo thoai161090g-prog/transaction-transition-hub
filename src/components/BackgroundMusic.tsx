@@ -1,18 +1,22 @@
 import { useState, useRef, useEffect } from "react";
 
-const MUSIC_URL = "https://cdn.pixabay.com/audio/2024/11/29/audio_d4b497e08a.mp3";
+const MUSIC_URL = "https://cdn.pixabay.com/audio/2022/10/18/audio_29caa68673.mp3";
 
 export default function BackgroundMusic() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [playing, setPlaying] = useState(false);
-  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    const audio = new Audio(MUSIC_URL);
+    const audio = new Audio();
+    audio.src = MUSIC_URL;
     audio.loop = true;
     audio.volume = 0.3;
-    audio.addEventListener("canplaythrough", () => setLoaded(true));
+    audio.preload = "auto";
     audioRef.current = audio;
+
+    audio.addEventListener("play", () => setPlaying(true));
+    audio.addEventListener("pause", () => setPlaying(false));
+
     return () => {
       audio.pause();
       audio.src = "";
@@ -20,13 +24,13 @@ export default function BackgroundMusic() {
   }, []);
 
   const toggle = () => {
-    if (!audioRef.current) return;
-    if (playing) {
-      audioRef.current.pause();
+    const audio = audioRef.current;
+    if (!audio) return;
+    if (audio.paused) {
+      audio.play().catch(() => {});
     } else {
-      audioRef.current.play().catch(() => {});
+      audio.pause();
     }
-    setPlaying(!playing);
   };
 
   return (
