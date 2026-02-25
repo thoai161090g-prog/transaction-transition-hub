@@ -10,6 +10,7 @@ import BuyKey from "./pages/BuyKey";
 import Admin from "./pages/Admin";
 import History from "./pages/History";
 import GameDetail from "./pages/GameDetail";
+import BackgroundMusic from "./components/BackgroundMusic";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -28,6 +29,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
+          <BackgroundMusic />
           <Routes>
             <Route path="/auth" element={<Auth />} />
             <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
