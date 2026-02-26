@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import Fireworks from "@/components/Fireworks";
 
 export default function Auth() {
   const [isLogin, setIsLogin] = useState(true);
@@ -33,51 +34,42 @@ export default function Auth() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4" style={{
+    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden" style={{
       background: "linear-gradient(180deg, #c0392b 0%, #e74c3c 20%, #d35400 50%, #1a0a00 100%)"
     }}>
-      <Card className="w-full max-w-md border-border" style={{
-        background: "rgba(26,10,0,0.9)",
+      <Fireworks />
+      <Card className="w-full max-w-md border-border relative z-10" style={{
+        background: "rgba(26,10,0,0.92)",
         borderColor: "rgba(255,174,0,0.3)",
-        boxShadow: "0 0 40px rgba(255,174,0,0.15)",
+        boxShadow: "0 0 60px rgba(255,174,0,0.2), 0 0 120px rgba(255,69,0,0.1)",
       }}>
         <CardHeader className="text-center">
-          <h1 className="text-3xl font-bold mb-2" style={{
-            background: "linear-gradient(135deg, #ffae00, #ffd700)",
+          <div className="text-5xl mb-2">👑</div>
+          <h1 className="text-3xl font-black mb-1 tracking-wider" style={{
+            background: "linear-gradient(135deg, #ffae00, #ffd700, #fff5a0)",
             WebkitBackgroundClip: "text",
             WebkitTextFillColor: "transparent",
-          }}>🏆 MD5 VIP Tool</h1>
-          <CardTitle className="text-white/90">{isLogin ? "Đăng Nhập" : "Đăng Ký"}</CardTitle>
+            textShadow: "none",
+            filter: "drop-shadow(0 0 10px rgba(255,215,0,0.5))",
+          }}>VĂN MINH TOOL</h1>
+          <p className="text-xs font-bold tracking-[0.3em]" style={{ color: "#ff8c00" }}>⚡ UY TÍN • CHẤT LƯỢNG • VIP PRO ⚡</p>
+          <CardTitle className="text-white/90 mt-3">{isLogin ? "Đăng Nhập" : "Đăng Ký"}</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <Input
-              type="email"
-              placeholder="Email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
-            />
-            <Input
-              type="password"
-              placeholder="Mật khẩu"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              minLength={6}
-              className="bg-white/10 border-white/20 text-white placeholder:text-white/50"
-            />
-            <Button type="submit" disabled={loading} className="w-full font-bold" style={{
+            <Input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required className="bg-white/10 border-white/20 text-white placeholder:text-white/50" />
+            <Input type="password" placeholder="Mật khẩu" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} className="bg-white/10 border-white/20 text-white placeholder:text-white/50" />
+            <Button type="submit" disabled={loading} className="w-full font-black text-base tracking-wider" style={{
               background: "linear-gradient(135deg, #ff8c00, #ffae00, #ffd000)",
               color: "#1a0a00",
+              boxShadow: "0 4px 20px rgba(255,174,0,0.5)",
             }}>
-              {loading ? "Đang xử lý..." : isLogin ? "Đăng Nhập" : "Đăng Ký"}
+              {loading ? "Đang xử lý..." : isLogin ? "🔓 ĐĂNG NHẬP" : "📝 ĐĂNG KÝ"}
             </Button>
           </form>
           <p className="text-center mt-4 text-white/60">
             {isLogin ? "Chưa có tài khoản?" : "Đã có tài khoản?"}{" "}
-            <button onClick={() => setIsLogin(!isLogin)} className="hover:underline" style={{ color: "#ffd700" }}>
+            <button onClick={() => setIsLogin(!isLogin)} className="hover:underline font-bold" style={{ color: "#ffd700" }}>
               {isLogin ? "Đăng ký" : "Đăng nhập"}
             </button>
           </p>

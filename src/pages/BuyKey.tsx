@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { KEY_PACKAGES, formatVND } from "@/lib/md5-analyzer";
 import { useToast } from "@/hooks/use-toast";
+import Fireworks from "@/components/Fireworks";
 
 const PKG_META: Record<string, { emoji: string; badge?: string; badgeColor?: string; features: string[] }> = {
   "1day": { emoji: "📅", badge: "🧧 Lì Xì 1 Key", badgeColor: "#ff6a6a", features: ["24 giờ sử dụng", "1 thiết bị đồng thời", "Cập nhật liên tục", "Hỗ trợ 24/7"] },
@@ -55,6 +56,7 @@ export default function BuyKey() {
     <div className="min-h-screen relative overflow-hidden" style={{
       background: "linear-gradient(180deg, #c0392b 0%, #e74c3c 20%, #d35400 50%, #1a0a00 100%)"
     }}>
+      <Fireworks />
       <div className="absolute top-0 left-0 right-0 h-40 pointer-events-none" style={{
         background: "radial-gradient(ellipse at 50% 0%, rgba(255,200,50,0.3) 0%, transparent 70%)"
       }} />
@@ -63,10 +65,10 @@ export default function BuyKey() {
         <div className="max-w-lg mx-auto flex items-center justify-between">
           <button onClick={() => navigate("/")} className="text-sm font-bold" style={{ color: "#ffd700" }}>← Trang chủ</button>
           <h1 className="text-lg font-black" style={{
-            background: "linear-gradient(135deg, #ffae00, #ffd700)",
+            background: "linear-gradient(135deg, #ffae00, #ffd700, #fff5a0)",
             WebkitBackgroundClip: "text",
             WebkitTextFillColor: "transparent",
-          }}>🔑 Mua Key</h1>
+          }}>👑 VĂN MINH - Mua Key</h1>
           <div className="w-16" />
         </div>
       </header>
@@ -79,6 +81,7 @@ export default function BuyKey() {
               boxShadow: "0 4px 30px rgba(255,174,0,0.3)",
             }}>
               <h2 className="text-xl font-black tracking-wide" style={{ color: "#c0392b" }}>🏷️ BẢNG GIÁ KEY</h2>
+              <p className="text-xs font-bold mt-1 tracking-[0.2em]" style={{ color: "#ff8c00" }}>👑 VĂN MINH TOOL — UY TÍN SỐ 1</p>
               <div className="mt-2 inline-block px-6 py-2 rounded-full text-sm font-bold" style={{
                 background: "linear-gradient(135deg, #ff8c00, #ffae00)",
                 color: "#1a0a00",
@@ -121,6 +124,13 @@ export default function BuyKey() {
                 <h2 className="text-center font-black text-lg" style={{ color: "#c0392b" }}>💳 Thanh Toán - Gói {pkg?.label}</h2>
                 <p className="text-center text-3xl font-black" style={{ color: "#1a0a00" }}>{pkg && formatVND(pkg.price)}</p>
 
+                {/* QR Code */}
+                <div className="flex justify-center">
+                  <div className="rounded-xl overflow-hidden border-2 p-2" style={{ borderColor: "rgba(255,174,0,0.5)", background: "#fff" }}>
+                    <img src="/images/qr-payment.jpeg" alt="QR Thanh toán MSB - Văn Minh" className="w-56 h-auto rounded-lg" />
+                  </div>
+                </div>
+
                 <div className="p-3 rounded-xl space-y-2 text-sm" style={{
                   background: "rgba(255,174,0,0.1)",
                   border: "1px solid rgba(255,174,0,0.3)",
@@ -129,6 +139,10 @@ export default function BuyKey() {
                   <p style={{ color: "#666" }}>Chủ TK: <span className="font-bold" style={{ color: "#1a0a00" }}>Nguyen Van Minh</span></p>
                   <p style={{ color: "#666" }}>STK: <span className="font-bold" style={{ color: "#c0392b" }}>4526032009</span></p>
                   <p style={{ color: "#666" }}>Nội dung CK: <span className="font-mono font-bold" style={{ color: "#c0392b" }}>{transferContent}</span></p>
+                </div>
+
+                <div className="text-center text-xs p-2 rounded-lg" style={{ background: "rgba(255,0,0,0.08)", color: "#c0392b" }}>
+                  ⚠️ Quét mã QR hoặc chuyển khoản theo thông tin trên, ghi đúng nội dung CK!
                 </div>
 
                 <button onClick={handleConfirmPayment} disabled={confirming}
@@ -146,7 +160,7 @@ export default function BuyKey() {
         )}
 
         <p className="text-center mt-6 text-xs text-white/50">
-          📱 Hỗ trợ: <a href="mailto:mvanminh45@gmail.com" className="hover:underline" style={{ color: "#ffd700" }}>mvanminh45@gmail.com</a>
+          👑 <span style={{ color: "#ffd700" }}>Văn Minh Tool</span> — Hỗ trợ: <a href="mailto:mvanminh45@gmail.com" className="hover:underline" style={{ color: "#ffd700" }}>mvanminh45@gmail.com</a>
         </p>
       </main>
 
