@@ -3,6 +3,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { GAMES } from "@/lib/md5-analyzer";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Menu } from "lucide-react";
+import Fireworks from "@/components/Fireworks";
 
 export default function Index() {
   const { user, isAdmin, signOut } = useAuth();
@@ -12,6 +13,7 @@ export default function Index() {
     <div className="min-h-screen relative overflow-hidden" style={{
       background: "linear-gradient(180deg, #c0392b 0%, #e74c3c 20%, #d35400 50%, #1a0a00 100%)"
     }}>
+      <Fireworks />
       <div className="absolute top-0 left-0 right-0 h-40 pointer-events-none" style={{
         background: "radial-gradient(ellipse at 50% 0%, rgba(255,200,50,0.3) 0%, transparent 70%)"
       }} />
@@ -19,10 +21,10 @@ export default function Index() {
       <header className="relative z-10 py-4 px-4">
         <div className="max-w-lg mx-auto flex items-center justify-between">
           <h1 className="text-xl font-black tracking-wider" style={{
-            background: "linear-gradient(135deg, #ffae00, #ffd700)",
+            background: "linear-gradient(135deg, #ffae00, #ffd700, #fff5a0)",
             WebkitBackgroundClip: "text",
             WebkitTextFillColor: "transparent",
-          }}>🏆 MD5 VIP Tool</h1>
+          }}>👑 VĂN MINH TOOL</h1>
           <Sheet>
             <SheetTrigger asChild>
               <button className="p-2" style={{ color: "#ffd700" }}>
@@ -31,6 +33,10 @@ export default function Index() {
             </SheetTrigger>
             <SheetContent side="right" className="w-64" style={{ background: "#1a0a00", borderColor: "rgba(255,174,0,0.3)" }}>
               <nav className="flex flex-col gap-3 mt-8">
+                <div className="text-center mb-4">
+                  <p className="text-lg font-black" style={{ color: "#ffd700" }}>👑 VĂN MINH</p>
+                  <p className="text-[10px] tracking-[0.2em]" style={{ color: "#ff8c00" }}>UY TÍN • CHẤT LƯỢNG</p>
+                </div>
                 {isAdmin && (
                   <button className="text-left px-4 py-3 rounded-xl font-bold text-sm border transition" style={{ borderColor: "rgba(255,174,0,0.3)", color: "#ffd700" }} onClick={() => navigate("/admin")}>
                     🔧 Admin
@@ -52,6 +58,7 @@ export default function Index() {
       </header>
 
       <section className="relative z-10 text-center px-4 pb-2">
+        <p className="text-xs font-bold tracking-[0.3em] mb-1" style={{ color: "#ff8c00" }}>⚡ UY TÍN • CHẤT LƯỢNG • VIP PRO ⚡</p>
         <p className="text-sm text-white/80">Xin chào, <span className="font-bold" style={{ color: "#ffd700" }}>{user?.email}</span></p>
       </section>
 
@@ -93,12 +100,15 @@ export default function Index() {
           background: "linear-gradient(135deg, rgba(255,174,0,0.15), rgba(255,174,0,0.05))",
           border: "2px solid rgba(255,174,0,0.4)",
           color: "#ff6a6a",
-        }}>✨ ĐĂNG XUẤT ✨</button>
+        }}>🚪 ĐĂNG XUẤT</button>
       </section>
 
       <section className="relative z-10 max-w-lg mx-auto px-4 pb-8">
-        <p className="text-center mt-4 text-xs text-white/50">
-          📱 Liên hệ Admin: <a href="mailto:mvanminh45@gmail.com" className="hover:underline" style={{ color: "#ffd700" }}>mvanminh45@gmail.com</a>
+        <p className="text-center text-xs text-white/50">
+          👑 <span style={{ color: "#ffd700" }}>Văn Minh Tool</span> — Uy tín • Chất lượng
+        </p>
+        <p className="text-center mt-1 text-xs text-white/40">
+          📱 Hỗ trợ: <a href="mailto:mvanminh45@gmail.com" className="hover:underline" style={{ color: "#ffd700" }}>mvanminh45@gmail.com</a>
         </p>
       </section>
     </div>
