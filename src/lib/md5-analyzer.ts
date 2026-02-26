@@ -24,12 +24,12 @@ export interface Game {
 }
 
 export const GAMES: Game[] = [
+  { id: "68gamebai", name: "68 Game Bài", icon: "🎴" },
+  { id: "lc79", name: "LC79", icon: "💎" },
+  { id: "thienduong", name: "Thiên Đường Trò Chơi", icon: "🏆" },
+  { id: "sao789", name: "Sao789", icon: "⭐" },
+  { id: "betvip", name: "BetVIP", icon: "🎰" },
   { id: "sunwin", name: "Sunwin", icon: "🌞" },
-  { id: "iwin", name: "iWin", icon: "🏆" },
-  { id: "go88", name: "Go88", icon: "🎰" },
-  { id: "b52", name: "B52", icon: "✈️" },
-  { id: "rik", name: "RikVIP", icon: "💎" },
-  { id: "789club", name: "789Club", icon: "🃏" },
 ];
 
 export function analyzeMD5(md5: string) {

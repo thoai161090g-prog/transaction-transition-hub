@@ -6,6 +6,19 @@ import { GAMES, analyzeMD5 } from "@/lib/md5-analyzer";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 
+interface SunwinApiResult {
+  id: string;
+  phien: number;
+  xuc_xac_1: number;
+  xuc_xac_2: number;
+  xuc_xac_3: number;
+  tong: number;
+  ket_qua: string;
+  du_doan: string;
+  pattern: string;
+  so_sanh: string;
+}
+
 export default function GameDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -13,21 +26,26 @@ export default function GameDetail() {
   const { toast } = useToast();
   const [md5Input, setMd5Input] = useState("");
   const [result, setResult] = useState<any>(null);
+  const [sunwinResult, setSunwinResult] = useState<SunwinApiResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [showParticles, setShowParticles] = useState(false);
-  const resultRef = useRef<HTMLDivElement>(null);
+  const [robotPhase, setRobotPhase] = useState<string | null>(null);
 
   const game = GAMES.find((g) => g.id === id);
   if (!game) return <div className="min-h-screen flex items-center justify-center text-white">Game không tồn tại</div>;
 
+  const isSunwin = game.id === "sunwin";
+
   const handleAnalyze = async () => {
-    if (!md5Input.trim()) {
+    if (!isSunwin && !md5Input.trim()) {
       toast({ title: "Lỗi", description: "Vui lòng nhập mã MD5", variant: "destructive" });
       return;
     }
 
     setLoading(true);
     setResult(null);
+    setSunwinResult(null);
+    setRobotPhase(null);
 
     const hasKey = await hasActiveKey();
     if (!hasKey) {
@@ -37,32 +55,63 @@ export default function GameDetail() {
       return;
     }
 
-    // Simulate dramatic loading
-    await new Promise(r => setTimeout(r, 1200));
+    if (isSunwin) {
+      // Sunwin: robot animation then fetch API
+      const phases = ["🤖 Robot đang khởi động...", "📡 Đang kết nối server...", "🔍 Đang thu thập dữ liệu...", "⚡ Đang phân tích kết quả..."];
+      for (const phase of phases) {
+        setRobotPhase(phase);
+        await new Promise(r => setTimeout(r, 800));
+      }
 
-    const analysis = analyzeMD5(md5Input);
-    if (!analysis) {
-      toast({ title: "Lỗi", description: "Mã MD5 không hợp lệ", variant: "destructive" });
-      setLoading(false);
-      return;
+      try {
+        const res = await fetch("https://apisuntcbm.onrender.com/sunlon");
+        if (!res.ok) throw new Error("API error");
+        const data: SunwinApiResult = await res.json();
+        setSunwinResult(data);
+        setShowParticles(true);
+        setTimeout(() => setShowParticles(false), 3000);
+
+        if (user) {
+          await supabase.from("analysis_history").insert({
+            user_id: user.id,
+            game: game.name,
+            md5_input: `Phiên #${data.phien}`,
+            result: data.du_doan,
+            tai_percent: data.ket_qua === "Tài" ? 70 : 30,
+            xiu_percent: data.ket_qua === "Xỉu" ? 70 : 30,
+            confidence: 85,
+          });
+        }
+      } catch {
+        toast({ title: "Lỗi", description: "Không thể kết nối API Sunwin", variant: "destructive" });
+      }
+    } else {
+      // Other games: MD5 analysis
+      await new Promise(r => setTimeout(r, 1200));
+      const analysis = analyzeMD5(md5Input);
+      if (!analysis) {
+        toast({ title: "Lỗi", description: "Mã MD5 không hợp lệ", variant: "destructive" });
+        setLoading(false);
+        return;
+      }
+      setResult(analysis);
+      setShowParticles(true);
+      setTimeout(() => setShowParticles(false), 3000);
+
+      if (user) {
+        await supabase.from("analysis_history").insert({
+          user_id: user.id,
+          game: game.name,
+          md5_input: md5Input,
+          result: analysis.result,
+          tai_percent: analysis.taiPercent,
+          xiu_percent: analysis.xiuPercent,
+          confidence: analysis.confidence,
+        });
+      }
     }
 
-    setResult(analysis);
-    setShowParticles(true);
-    setTimeout(() => setShowParticles(false), 3000);
-
-    if (user) {
-      await supabase.from("analysis_history").insert({
-        user_id: user.id,
-        game: game.name,
-        md5_input: md5Input,
-        result: analysis.result,
-        tai_percent: analysis.taiPercent,
-        xiu_percent: analysis.xiuPercent,
-        confidence: analysis.confidence,
-      });
-    }
-
+    setRobotPhase(null);
     setLoading(false);
   };
 
@@ -89,7 +138,7 @@ export default function GameDetail() {
         }} />
       </div>
 
-      {/* Gold particle effects when result shows */}
+      {/* Gold particle effects */}
       {showParticles && (
         <div className="absolute inset-0 pointer-events-none z-50">
           {Array.from({ length: 20 }).map((_, i) => (
@@ -123,7 +172,7 @@ export default function GameDetail() {
       </header>
 
       <main className="relative z-10 max-w-lg mx-auto px-4 py-6 space-y-6">
-        {/* VIP Input Section */}
+        {/* Input Section */}
         <div className="rounded-3xl p-[2px] shadow-2xl" style={{
           background: "linear-gradient(135deg, #ffd700, #ff8c00, #ffd700, #ffae00)",
           boxShadow: "0 0 40px rgba(255,215,0,0.2), 0 0 80px rgba(255,140,0,0.1)"
@@ -137,58 +186,191 @@ export default function GameDetail() {
                 border: "1px solid rgba(255,215,0,0.3)",
                 color: "#ffd700"
               }}>
-                ✨ VIP ANALYSIS ENGINE ✨
+                {isSunwin ? "🤖 SUNWIN AI ENGINE 🤖" : "✨ VIP ANALYSIS ENGINE ✨"}
               </div>
               <h2 className="text-2xl font-black tracking-wide" style={{
                 background: "linear-gradient(135deg, #fff, #ffd700)",
                 WebkitBackgroundClip: "text",
                 WebkitTextFillColor: "transparent",
-              }}>🔮 Phân Tích MD5</h2>
+              }}>
+                {isSunwin ? "🤖 Robot Phân Tích" : "🔮 Phân Tích MD5"}
+              </h2>
+              {isSunwin && (
+                <p className="text-xs" style={{ color: "rgba(255,215,0,0.6)" }}>
+                  Dữ liệu realtime từ Sunwin API
+                </p>
+              )}
             </div>
 
-            <div className="relative">
-              <Input
-                placeholder="Nhập mã MD5 tại đây..."
-                value={md5Input}
-                onChange={(e) => setMd5Input(e.target.value)}
-                className="font-mono text-center text-lg py-6 rounded-2xl border-2 transition-all focus:shadow-lg"
-                style={{
-                  background: "rgba(255,255,255,0.05)",
-                  borderColor: "rgba(255,215,0,0.3)",
-                  color: "#fff",
-                  boxShadow: "inset 0 2px 10px rgba(0,0,0,0.3)"
-                }}
-              />
-              <div className="absolute inset-0 rounded-2xl pointer-events-none" style={{
-                background: "linear-gradient(135deg, rgba(255,215,0,0.05), transparent, rgba(255,140,0,0.05))"
-              }} />
-            </div>
+            {!isSunwin && (
+              <div className="relative">
+                <Input
+                  placeholder="Nhập mã MD5 tại đây..."
+                  value={md5Input}
+                  onChange={(e) => setMd5Input(e.target.value)}
+                  className="font-mono text-center text-lg py-6 rounded-2xl border-2 transition-all focus:shadow-lg"
+                  style={{
+                    background: "rgba(255,255,255,0.05)",
+                    borderColor: "rgba(255,215,0,0.3)",
+                    color: "#fff",
+                    boxShadow: "inset 0 2px 10px rgba(0,0,0,0.3)"
+                  }}
+                />
+              </div>
+            )}
+
+            {/* Robot animation during loading for Sunwin */}
+            {isSunwin && robotPhase && (
+              <div className="text-center py-4 space-y-3">
+                <div className="text-6xl" style={{ animation: "robot-bounce 0.6s ease-in-out infinite" }}>🤖</div>
+                <p className="text-sm font-bold" style={{ color: "#ffd700", animation: "blink 1s ease-in-out infinite" }}>{robotPhase}</p>
+                <div className="flex justify-center gap-1">
+                  {[0, 1, 2, 3, 4].map(i => (
+                    <div key={i} className="w-2 h-2 rounded-full" style={{
+                      background: "#ffd700",
+                      animation: `dot-pulse 1.2s ease-in-out ${i * 0.2}s infinite`
+                    }} />
+                  ))}
+                </div>
+              </div>
+            )}
 
             <button
               onClick={handleAnalyze}
               disabled={loading}
-              className="w-full py-5 rounded-2xl font-black text-lg tracking-widest disabled:opacity-60 transition-all hover:scale-[1.02] active:scale-[0.98] relative overflow-hidden"
+              className="w-full py-5 rounded-2xl font-black text-lg tracking-widest disabled:opacity-60 transition-all hover:scale-[1.02] active:scale-[0.98]"
               style={{
                 background: "linear-gradient(135deg, #ffd700, #ff8c00, #ffd700)",
                 color: "#1a0a00",
                 boxShadow: "0 4px 30px rgba(255,215,0,0.4), 0 0 60px rgba(255,140,0,0.2)",
               }}
             >
-              <span className="relative z-10">
-                {loading ? (
-                  <span className="flex items-center justify-center gap-3">
-                    <span className="inline-block w-5 h-5 border-2 border-current border-t-transparent rounded-full" style={{ animation: "spin 0.8s linear infinite" }} />
-                    ĐANG PHÂN TÍCH...
-                  </span>
-                ) : "🚀 PHÂN TÍCH NGAY"}
-              </span>
+              {loading ? (
+                <span className="flex items-center justify-center gap-3">
+                  <span className="inline-block w-5 h-5 border-2 border-current border-t-transparent rounded-full" style={{ animation: "spin 0.8s linear infinite" }} />
+                  {isSunwin ? "ROBOT ĐANG LÀM VIỆC..." : "ĐANG PHÂN TÍCH..."}
+                </span>
+              ) : isSunwin ? "🤖 BẮT ĐẦU PHÂN TÍCH" : "🚀 PHÂN TÍCH NGAY"}
             </button>
           </div>
         </div>
 
-        {/* VIP Result Section */}
-        {result && (
-          <div ref={resultRef} className="rounded-3xl p-[2px] shadow-2xl" style={{
+        {/* Sunwin API Result */}
+        {sunwinResult && (
+          <div className="rounded-3xl p-[2px] shadow-2xl" style={{
+            background: "linear-gradient(135deg, #ffd700, #ff6b00, #ffd700)",
+            boxShadow: "0 0 50px rgba(255,107,0,0.3), 0 0 100px rgba(255,215,0,0.15)",
+            animation: "result-appear 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)"
+          }}>
+            <div className="rounded-3xl p-6 text-center space-y-5 backdrop-blur-xl" style={{
+              background: "linear-gradient(135deg, rgba(15,5,25,0.97), rgba(25,10,40,0.97))"
+            }}>
+              <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full text-xs font-bold tracking-wider" style={{
+                background: "linear-gradient(135deg, rgba(255,215,0,0.15), rgba(255,140,0,0.1))",
+                border: "1px solid rgba(255,215,0,0.25)",
+                color: "#ffd700"
+              }}>
+                🤖 KẾT QUẢ TỪ ROBOT
+              </div>
+
+              {/* Phiên */}
+              <div className="text-sm font-bold" style={{ color: "rgba(255,255,255,0.7)" }}>
+                Phiên #{sunwinResult.phien}
+              </div>
+
+              {/* Dice display */}
+              <div className="flex justify-center gap-4 py-2">
+                {[sunwinResult.xuc_xac_1, sunwinResult.xuc_xac_2, sunwinResult.xuc_xac_3].map((dice, i) => (
+                  <div key={i} className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl font-black" style={{
+                    background: "linear-gradient(135deg, rgba(255,215,0,0.2), rgba(255,140,0,0.1))",
+                    border: "2px solid rgba(255,215,0,0.3)",
+                    color: "#ffd700",
+                    animation: `dice-pop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) ${i * 0.15}s both`
+                  }}>
+                    {dice}
+                  </div>
+                ))}
+              </div>
+
+              <div className="text-sm" style={{ color: "rgba(255,255,255,0.5)" }}>
+                Tổng: <span className="font-black text-lg" style={{ color: "#ffd700" }}>{sunwinResult.tong}</span>
+              </div>
+
+              {/* Kết quả */}
+              <div className="p-4 rounded-2xl" style={{
+                background: sunwinResult.ket_qua === "Tài"
+                  ? "linear-gradient(135deg, rgba(255,107,0,0.2), rgba(255,215,0,0.1))"
+                  : "linear-gradient(135deg, rgba(0,195,255,0.2), rgba(124,58,237,0.1))",
+                border: `1px solid ${sunwinResult.ket_qua === "Tài" ? "rgba(255,107,0,0.3)" : "rgba(0,195,255,0.3)"}`
+              }}>
+                <div className="text-xs font-bold tracking-wider mb-1" style={{ color: "rgba(255,255,255,0.5)" }}>KẾT QUẢ PHIÊN HIỆN TẠI</div>
+                <div className="text-4xl font-black" style={{
+                  background: sunwinResult.ket_qua === "Tài"
+                    ? "linear-gradient(135deg, #ffd700, #ff6b00)"
+                    : "linear-gradient(135deg, #00c3ff, #7c3aed)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                }}>
+                  {sunwinResult.ket_qua === "Tài" ? "🔥" : "❄️"} {sunwinResult.ket_qua}
+                </div>
+              </div>
+
+              {/* Dự đoán */}
+              <div className="p-4 rounded-2xl" style={{
+                background: "linear-gradient(135deg, rgba(0,255,136,0.15), rgba(0,200,100,0.05))",
+                border: "1px solid rgba(0,255,136,0.2)"
+              }}>
+                <div className="text-xs font-bold tracking-wider mb-1" style={{ color: "rgba(255,255,255,0.5)" }}>🤖 DỰ ĐOÁN PHIÊN SAU</div>
+                <div className="text-5xl font-black" style={{
+                  background: sunwinResult.du_doan === "Tài"
+                    ? "linear-gradient(135deg, #ffd700, #ff6b00)"
+                    : "linear-gradient(135deg, #00c3ff, #7c3aed)",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                }}>
+                  {sunwinResult.du_doan === "Tài" ? "🔥" : "❄️"} {sunwinResult.du_doan}
+                </div>
+              </div>
+
+              {/* Pattern */}
+              <div className="p-3 rounded-2xl" style={{
+                background: "rgba(255,255,255,0.03)",
+                border: "1px solid rgba(255,255,255,0.08)"
+              }}>
+                <div className="text-xs font-bold tracking-wider mb-2" style={{ color: "rgba(255,255,255,0.4)" }}>PATTERN GẦN ĐÂY</div>
+                <div className="flex flex-wrap justify-center gap-1">
+                  {sunwinResult.pattern.split("").map((c, i) => (
+                    <span key={i} className="w-6 h-6 rounded text-xs font-black flex items-center justify-center" style={{
+                      background: c === "T" ? "rgba(255,140,0,0.3)" : "rgba(0,195,255,0.3)",
+                      color: c === "T" ? "#ffd700" : "#00c3ff",
+                    }}>{c}</span>
+                  ))}
+                </div>
+              </div>
+
+              {/* So sánh */}
+              <div className="text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>
+                {sunwinResult.so_sanh}
+              </div>
+
+              <button
+                onClick={() => { setSunwinResult(null); }}
+                className="w-full py-3 rounded-xl font-bold text-sm tracking-wider transition-all hover:scale-[1.02]"
+                style={{
+                  background: "rgba(255,255,255,0.05)",
+                  border: "1px solid rgba(255,215,0,0.2)",
+                  color: "#ffd700"
+                }}
+              >
+                🔄 PHÂN TÍCH LẠI
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* MD5 Result for other games */}
+        {result && !isSunwin && (
+          <div className="rounded-3xl p-[2px] shadow-2xl" style={{
             background: result.result === "Tài"
               ? "linear-gradient(135deg, #ffd700, #ff6b00, #ffd700)"
               : "linear-gradient(135deg, #00c3ff, #7c3aed, #00c3ff)",
@@ -208,7 +390,6 @@ export default function GameDetail() {
                 📊 KẾT QUẢ PHÂN TÍCH
               </div>
 
-              {/* Main result with glow */}
               <div className="py-4 relative">
                 <div className="absolute inset-0 flex items-center justify-center">
                   <div className="w-32 h-32 rounded-full opacity-30" style={{
@@ -231,7 +412,6 @@ export default function GameDetail() {
                 </div>
               </div>
 
-              {/* Percentage bars */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="p-4 rounded-2xl relative overflow-hidden" style={{
                   background: "linear-gradient(135deg, rgba(255,140,0,0.15), rgba(255,215,0,0.05))",
@@ -269,7 +449,6 @@ export default function GameDetail() {
                 </div>
               </div>
 
-              {/* Confidence meter */}
               <div className="p-4 rounded-2xl" style={{
                 background: "linear-gradient(135deg, rgba(0,255,136,0.1), rgba(0,200,100,0.05))",
                 border: "1px solid rgba(0,255,136,0.15)"
@@ -289,7 +468,6 @@ export default function GameDetail() {
                 }}>{result.confidence}%</div>
               </div>
 
-              {/* Analyze another */}
               <button
                 onClick={() => { setResult(null); setMd5Input(""); }}
                 className="w-full py-3 rounded-xl font-bold text-sm tracking-wider transition-all hover:scale-[1.02]"
@@ -329,6 +507,22 @@ export default function GameDetail() {
         }
         @keyframes spin {
           to { transform: rotate(360deg); }
+        }
+        @keyframes robot-bounce {
+          0%, 100% { transform: translateY(0) rotate(-5deg); }
+          50% { transform: translateY(-10px) rotate(5deg); }
+        }
+        @keyframes blink {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.5; }
+        }
+        @keyframes dot-pulse {
+          0%, 100% { opacity: 0.3; transform: scale(0.8); }
+          50% { opacity: 1; transform: scale(1.3); }
+        }
+        @keyframes dice-pop {
+          0% { opacity: 0; transform: scale(0) rotate(-180deg); }
+          100% { opacity: 1; transform: scale(1) rotate(0deg); }
         }
       `}</style>
     </div>
