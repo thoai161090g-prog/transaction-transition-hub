@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 
-const MUSIC_URL = "https://cdn.pixabay.com/audio/2022/10/18/audio_29caa68673.mp3";
+const MUSIC_URL = "/music/background.mp3";
 
 export default function BackgroundMusic() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
