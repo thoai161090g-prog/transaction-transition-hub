@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import Fireworks from "@/components/Fireworks";
 import { Eye, EyeOff, LogIn, UserPlus, Mail, Lock, User, Shield, Zap, Headphones } from "lucide-react";
@@ -11,6 +12,8 @@ export default function Auth() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [forgotMode, setForgotMode] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -22,6 +25,24 @@ export default function Auth() {
   const strengthLabel = ["Chưa nhập", "Yếu", "Trung bình", "Mạnh"][passwordStrength];
   const strengthColor = ["#666", "#ff4444", "#ffaa00", "#00ff88"][passwordStrength];
   const passwordsMatch = confirmPassword.length > 0 && password === confirmPassword;
+
+  const handleForgotPassword = async () => {
+    if (!resetEmail) {
+      toast({ title: "Lỗi", description: "Vui lòng nhập email", variant: "destructive" });
+      return;
+    }
+    setLoading(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    setLoading(false);
+    if (error) {
+      toast({ title: "Lỗi", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "✅ Đã gửi!", description: "Kiểm tra email để đặt lại mật khẩu." });
+      setForgotMode(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -90,12 +111,44 @@ export default function Auth() {
           </button>
         </div>
 
+        {forgotMode ? (
+          <div className="p-6 space-y-5">
+            <div className="text-center">
+              <h3 className="text-lg font-bold text-white">🔑 Quên mật khẩu</h3>
+              <p className="text-xs mt-1" style={{ color: "rgba(255,255,255,0.5)" }}>Nhập email để nhận link đặt lại mật khẩu</p>
+            </div>
+            <div>
+              <label className="flex items-center gap-2 text-sm font-bold mb-2" style={{ color: "#4da6ff" }}>
+                <Mail className="w-4 h-4" /> Email
+              </label>
+              <div className="relative">
+                <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "rgba(255,255,255,0.3)" }} />
+                <input
+                  type="email"
+                  value={resetEmail}
+                  onChange={(e) => setResetEmail(e.target.value)}
+                  required
+                  placeholder="Nhập email của bạn"
+                  className="w-full pl-12 pr-4 py-3.5 rounded-xl text-white text-sm outline-none transition-all"
+                  style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.1)" }}
+                />
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={handleForgotPassword}
+              disabled={loading}
+              className="w-full py-4 rounded-2xl font-black text-base tracking-wider disabled:opacity-60 transition-all"
+              style={{ background: "linear-gradient(135deg, #f97316, #ec4899, #a855f7)", color: "#fff" }}
+            >
+              {loading ? "Đang gửi..." : "📧 Gửi link đặt lại"}
+            </button>
+            <button type="button" onClick={() => setForgotMode(false)} className="w-full text-center text-sm font-bold" style={{ color: "#ffd700" }}>
+              ← Quay lại đăng nhập
+            </button>
+          </div>
+        ) : (
         <form onSubmit={handleSubmit} className="p-6 space-y-5">
-          {/* Success message for login after signup */}
-          {isLogin && (
-            <div id="login-form" />
-          )}
-
           {!isLogin && (
             <div>
               <label className="flex items-center gap-2 text-sm font-bold mb-2" style={{ color: "#4da6ff" }}>
@@ -153,6 +206,11 @@ export default function Auth() {
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
+            {isLogin && (
+              <div className="text-right mt-1">
+                <button type="button" onClick={() => setForgotMode(true)} className="text-xs font-bold" style={{ color: "#ffd700" }}>Quên mật khẩu?</button>
+              </div>
+            )}
             {!isLogin && (
               <div className="mt-2">
                 <div className="w-full h-1.5 rounded-full overflow-hidden" style={{ background: "rgba(255,255,255,0.1)" }}>
@@ -214,6 +272,7 @@ export default function Auth() {
             )}
           </button>
         </form>
+        )}
 
         {/* Bottom badges */}
         {isLogin && (
