@@ -5,110 +5,131 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Menu } from "lucide-react";
 import Fireworks from "@/components/Fireworks";
 
+const GAME_COLORS: Record<string, { bg: string; iconBg: string }> = {
+  "68gamebai": { bg: "rgba(59,130,246,0.15)", iconBg: "linear-gradient(135deg, #3b82f6, #2563eb)" },
+  "lc79": { bg: "rgba(234,179,8,0.15)", iconBg: "linear-gradient(135deg, #eab308, #ca8a04)" },
+  "thienduong": { bg: "rgba(249,115,22,0.15)", iconBg: "linear-gradient(135deg, #f97316, #ea580c)" },
+  "sao789": { bg: "rgba(168,85,247,0.15)", iconBg: "linear-gradient(135deg, #a855f7, #7c3aed)" },
+  "betvip": { bg: "rgba(234,179,8,0.15)", iconBg: "linear-gradient(135deg, #eab308, #d97706)" },
+  "sunwin": { bg: "rgba(239,68,68,0.15)", iconBg: "linear-gradient(135deg, #ef4444, #dc2626)" },
+};
+
+const GAME_SUBTITLES: Record<string, string> = {
+  "68gamebai": "Đại lý",
+  "lc79": "Game bài",
+  "thienduong": "Trò chơi",
+  "sao789": "Slot game",
+  "betvip": "Nổ hũ",
+  "sunwin": "Game bài",
+};
+
 export default function Index() {
   const { user, isAdmin, signOut } = useAuth();
   const navigate = useNavigate();
 
   return (
     <div className="min-h-screen relative overflow-hidden" style={{
-      background: "linear-gradient(180deg, #c0392b 0%, #e74c3c 20%, #d35400 50%, #1a0a00 100%)"
+      background: "linear-gradient(180deg, #0f1729 0%, #1a2140 50%, #0f1729 100%)"
     }}>
       <Fireworks />
-      <div className="absolute top-0 left-0 right-0 h-40 pointer-events-none" style={{
-        background: "radial-gradient(ellipse at 50% 0%, rgba(255,200,50,0.3) 0%, transparent 70%)"
-      }} />
 
       <header className="relative z-10 py-4 px-4">
         <div className="max-w-lg mx-auto flex items-center justify-between">
-          <h1 className="text-xl font-black tracking-wider" style={{
-            background: "linear-gradient(135deg, #ffae00, #ffd700, #fff5a0)",
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
-          }}>👑 VĂN MINH TOOL</h1>
-          <Sheet>
-            <SheetTrigger asChild>
-              <button className="p-2" style={{ color: "#ffd700" }}>
-                <Menu className="h-6 w-6" />
-              </button>
-            </SheetTrigger>
-            <SheetContent side="right" className="w-64" style={{ background: "#1a0a00", borderColor: "rgba(255,174,0,0.3)" }}>
-              <nav className="flex flex-col gap-3 mt-8">
-                <div className="text-center mb-4">
-                  <p className="text-lg font-black" style={{ color: "#ffd700" }}>👑 VĂN MINH</p>
-                  <p className="text-[10px] tracking-[0.2em]" style={{ color: "#ff8c00" }}>UY TÍN • CHẤT LƯỢNG</p>
-                </div>
-                {isAdmin && (
-                  <button className="text-left px-4 py-3 rounded-xl font-bold text-sm border transition" style={{ borderColor: "rgba(255,174,0,0.3)", color: "#ffd700" }} onClick={() => navigate("/admin")}>
-                    🔧 Admin
+          <h1 className="text-lg font-black tracking-wider flex items-center gap-2" style={{ color: "#ffd700" }}>
+            👑 <span>Văn Minh</span>
+          </h1>
+          <div className="flex items-center gap-3">
+            <span className="text-xs px-3 py-1 rounded-full font-bold" style={{
+              background: "rgba(255,215,0,0.15)",
+              color: "#ffd700",
+              border: "1px solid rgba(255,215,0,0.2)"
+            }}>💰 VIP</span>
+            <Sheet>
+              <SheetTrigger asChild>
+                <button className="w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm" style={{
+                  background: "linear-gradient(135deg, #f97316, #ffd700)",
+                  color: "#1a0a00",
+                }}>
+                  {user?.email?.[0]?.toUpperCase() || "U"}
+                </button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-64 border-0" style={{ background: "#1a2140" }}>
+                <nav className="flex flex-col gap-3 mt-8">
+                  <div className="text-center mb-4">
+                    <p className="text-lg font-black" style={{ color: "#ffd700" }}>👑 Văn Minh</p>
+                    <p className="text-[10px] tracking-[0.2em]" style={{ color: "rgba(255,255,255,0.4)" }}>UY TÍN • CHẤT LƯỢNG</p>
+                    <p className="text-xs mt-2" style={{ color: "rgba(255,255,255,0.5)" }}>{user?.email}</p>
+                  </div>
+                  {isAdmin && (
+                    <button className="text-left px-4 py-3 rounded-xl font-bold text-sm transition" style={{ background: "rgba(255,215,0,0.1)", color: "#ffd700" }} onClick={() => navigate("/admin")}>
+                      🔧 Admin
+                    </button>
+                  )}
+                  <button className="text-left px-4 py-3 rounded-xl font-bold text-sm transition" style={{ background: "rgba(255,215,0,0.1)", color: "#ffd700" }} onClick={() => navigate("/buy-key")}>
+                    🔑 Mua Key
                   </button>
-                )}
-                <button className="text-left px-4 py-3 rounded-xl font-bold text-sm border transition" style={{ borderColor: "rgba(255,174,0,0.3)", color: "#ffd700" }} onClick={() => navigate("/buy-key")}>
-                  🔑 Mua Key
-                </button>
-                <button className="text-left px-4 py-3 rounded-xl font-bold text-sm border transition" style={{ borderColor: "rgba(255,174,0,0.3)", color: "#ffd700" }} onClick={() => navigate("/history")}>
-                  📜 Lịch sử
-                </button>
-                <button className="text-left px-4 py-3 rounded-xl font-bold text-sm transition text-white/50 hover:text-white" onClick={signOut}>
-                  🚪 Đăng xuất
-                </button>
-              </nav>
-            </SheetContent>
-          </Sheet>
+                  <button className="text-left px-4 py-3 rounded-xl font-bold text-sm transition" style={{ background: "rgba(255,215,0,0.1)", color: "#ffd700" }} onClick={() => navigate("/history")}>
+                    📜 Lịch sử
+                  </button>
+                  <button className="text-left px-4 py-3 rounded-xl font-bold text-sm transition text-white/50 hover:text-white" onClick={signOut}>
+                    🚪 Đăng xuất
+                  </button>
+                </nav>
+              </SheetContent>
+            </Sheet>
+          </div>
         </div>
       </header>
 
-      <section className="relative z-10 text-center px-4 pb-2">
-        <p className="text-xs font-bold tracking-[0.3em] mb-1" style={{ color: "#ff8c00" }}>⚡ UY TÍN • CHẤT LƯỢNG • VIP PRO ⚡</p>
-        <p className="text-sm text-white/80">Xin chào, <span className="font-bold" style={{ color: "#ffd700" }}>{user?.email}</span></p>
-      </section>
-
-      <section className="relative z-10 text-center py-4 px-4">
-        <h2 className="text-xl font-black tracking-wide" style={{
-          background: "linear-gradient(135deg, #ffae00, #ffd700)",
-          WebkitBackgroundClip: "text",
-          WebkitTextFillColor: "transparent",
-        }}>🎮 CHỌN NHÀ CÁI</h2>
-      </section>
-
-      <section className="relative z-10 max-w-lg mx-auto px-4 pb-8">
+      <section className="relative z-10 max-w-lg mx-auto px-4 py-6">
         <div className="grid grid-cols-2 gap-4">
-          {GAMES.map((game) => (
-            <div key={game.id} className="rounded-2xl p-[2px] cursor-pointer transition-transform hover:scale-[1.03] active:scale-[0.98]"
-              style={{ background: "linear-gradient(135deg, #ffae00, #ff8c00, #ffae00)" }}
-              onClick={() => navigate(`/game/${game.id}`)}>
-              <div className="rounded-2xl p-4 flex flex-col items-center gap-3" style={{ background: "rgba(255,248,230,0.95)" }}>
-                <div className="w-16 h-16 rounded-xl flex items-center justify-center text-4xl" style={{
-                  background: "linear-gradient(135deg, #fff5e0, #ffe4b3)",
-                  boxShadow: "0 4px 15px rgba(255,174,0,0.3)",
+          {GAMES.map((game) => {
+            const colors = GAME_COLORS[game.id] || { bg: "rgba(255,255,255,0.05)", iconBg: "linear-gradient(135deg, #666, #888)" };
+            const subtitle = GAME_SUBTITLES[game.id] || "";
+            return (
+              <div
+                key={game.id}
+                className="rounded-2xl p-5 cursor-pointer transition-all hover:scale-[1.03] active:scale-[0.97] flex flex-col items-center gap-3"
+                style={{
+                  background: "rgba(25,35,65,0.8)",
+                  border: "1px solid rgba(255,255,255,0.06)",
+                  boxShadow: "0 4px 20px rgba(0,0,0,0.2)"
+                }}
+                onClick={() => navigate(`/game/${game.id}`)}
+              >
+                <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl" style={{
+                  background: colors.iconBg,
+                  boxShadow: "0 4px 15px rgba(0,0,0,0.3)",
                 }}>
                   {game.icon}
                 </div>
-                <span className="font-bold text-sm" style={{ color: "#1a0a00" }}>{game.name}</span>
-                <button className="w-full py-2.5 rounded-xl font-black text-sm tracking-wider" style={{
-                  background: "linear-gradient(135deg, #ff8c00, #ffae00, #ffd000)",
-                  color: "#1a0a00",
-                  boxShadow: "0 3px 12px rgba(255,174,0,0.4)",
-                }}>MỞ TOOL</button>
+                <div className="text-center">
+                  <p className="font-black text-sm text-white">{game.name.toUpperCase()}</p>
+                  <p className="text-[11px]" style={{ color: "rgba(255,255,255,0.4)" }}>{subtitle}</p>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </section>
 
       <section className="relative z-10 max-w-lg mx-auto px-4 pb-6">
-        <button onClick={signOut} className="w-full py-4 rounded-full font-black text-base tracking-wider" style={{
-          background: "linear-gradient(135deg, rgba(255,174,0,0.15), rgba(255,174,0,0.05))",
-          border: "2px solid rgba(255,174,0,0.4)",
-          color: "#ff6a6a",
-        }}>🚪 ĐĂNG XUẤT</button>
+        <div className="flex gap-3">
+          <button onClick={() => navigate("/buy-key")} className="flex-1 py-3.5 rounded-2xl font-bold text-sm" style={{
+            background: "linear-gradient(135deg, #f97316, #ffd700)",
+            color: "#1a0a00",
+          }}>🔑 Mua Key</button>
+          <button onClick={signOut} className="py-3.5 px-6 rounded-2xl font-bold text-sm" style={{
+            background: "rgba(255,255,255,0.05)",
+            border: "1px solid rgba(255,255,255,0.1)",
+            color: "rgba(255,255,255,0.5)",
+          }}>🚪</button>
+        </div>
       </section>
 
       <section className="relative z-10 max-w-lg mx-auto px-4 pb-8">
-        <p className="text-center text-xs text-white/50">
+        <p className="text-center text-xs" style={{ color: "rgba(255,255,255,0.3)" }}>
           👑 <span style={{ color: "#ffd700" }}>Văn Minh Tool</span> — Uy tín • Chất lượng
-        </p>
-        <p className="text-center mt-1 text-xs text-white/40">
-          📱 Hỗ trợ: <a href="mailto:mvanminh45@gmail.com" className="hover:underline" style={{ color: "#ffd700" }}>mvanminh45@gmail.com</a>
         </p>
       </section>
     </div>
