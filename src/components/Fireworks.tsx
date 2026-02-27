@@ -59,14 +59,16 @@ export default function Fireworks() {
         // Trail
         for (let i = 0; i < p.trail.length; i++) {
           const ta = (i / p.trail.length) * alpha * 0.4;
+          const trailRadius = Math.max(0.1, p.size * 0.5);
           ctx.beginPath();
-          ctx.arc(p.trail[i].x, p.trail[i].y, p.size * 0.5, 0, Math.PI * 2);
+          ctx.arc(p.trail[i].x, p.trail[i].y, trailRadius, 0, Math.PI * 2);
           ctx.fillStyle = p.color + Math.round(ta * 255).toString(16).padStart(2, "0");
           ctx.fill();
         }
         // Main
+        const mainRadius = Math.max(0.1, p.size * alpha);
         ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size * alpha, 0, Math.PI * 2);
+        ctx.arc(p.x, p.y, mainRadius, 0, Math.PI * 2);
         ctx.fillStyle = p.color;
         ctx.globalAlpha = alpha;
         ctx.shadowBlur = 8;
