@@ -4,8 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { KEY_PACKAGES, formatVND } from "@/lib/md5-analyzer";
 import { useToast } from "@/hooks/use-toast";
-import Fireworks from "@/components/Fireworks";
-import { Star, Sun, Cloud, Calendar, CalendarCheck, Infinity } from "lucide-react";
+import { Star, Sun, Cloud, Calendar, Infinity, CreditCard, Smartphone } from "lucide-react";
 
 const PKG_META: Record<string, { icon: React.ReactNode; iconBg: string; subtitle: string; badge?: string; badgeColor?: string; features: string[]; suffix: string }> = {
   "1day": {
@@ -49,12 +48,31 @@ const PKG_META: Record<string, { icon: React.ReactNode; iconBg: string; subtitle
   },
 };
 
+const TELCOS = [
+  { id: "viettel", name: "Viettel", color: "#e60000" },
+  { id: "mobifone", name: "Mobifone", color: "#005baa" },
+  { id: "vinaphone", name: "Vinaphone", color: "#0066b3" },
+  { id: "vietnamobile", name: "Vietnamobile", color: "#ffc600" },
+  { id: "zing", name: "Zing", color: "#00a651" },
+  { id: "garena", name: "Garena", color: "#ff5500" },
+];
+
+const CARD_AMOUNTS = [10000, 20000, 50000, 100000, 200000, 500000];
+
 export default function BuyKey() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const [selectedPkg, setSelectedPkg] = useState<string | null>(null);
   const [confirming, setConfirming] = useState(false);
+  const [paymentTab, setPaymentTab] = useState<"bank" | "card">("bank");
+
+  // Card top-up state
+  const [cardTelco, setCardTelco] = useState("");
+  const [cardSerial, setCardSerial] = useState("");
+  const [cardCode, setCardCode] = useState("");
+  const [cardAmount, setCardAmount] = useState<number>(0);
+  const [cardSubmitting, setCardSubmitting] = useState(false);
 
   const pkg = KEY_PACKAGES.find((p) => p.id === selectedPkg);
   const transferContent = user ? `KEY_${user.id.slice(0, 8).toUpperCase()}_${selectedPkg?.toUpperCase()}` : "";
@@ -85,6 +103,45 @@ export default function BuyKey() {
     }
     setSelectedPkg(null);
     setConfirming(false);
+  };
+
+  const handleCardTopup = async () => {
+    if (!user || !selectedPkg) return;
+    if (!cardTelco) { toast({ title: "Lỗi", description: "Vui lòng chọn nhà mạng", variant: "destructive" }); return; }
+    if (!cardSerial.trim()) { toast({ title: "Lỗi", description: "Vui lòng nhập số serial", variant: "destructive" }); return; }
+    if (!cardCode.trim()) { toast({ title: "Lỗi", description: "Vui lòng nhập mã thẻ", variant: "destructive" }); return; }
+    if (!cardAmount) { toast({ title: "Lỗi", description: "Vui lòng chọn mệnh giá", variant: "destructive" }); return; }
+
+    setCardSubmitting(true);
+
+    const { error } = await supabase.from("card_topups").insert({
+      user_id: user.id,
+      telco: cardTelco,
+      serial_number: cardSerial.trim(),
+      card_code: cardCode.trim(),
+      amount: cardAmount,
+      package: selectedPkg,
+      status: "pending",
+    });
+
+    if (error) {
+      toast({ title: "Lỗi", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "✅ Đã gửi thẻ cào!", description: "Hệ thống đang xử lý, vui lòng chờ Admin duyệt." });
+      try {
+        await supabase.functions.invoke("telegram-notify", {
+          body: { email: user.email, amount: cardAmount, package_name: pkg?.label, transfer_content: `CARD_${cardTelco}_${cardAmount}`, status: "card_pending" },
+        });
+      } catch (e) {
+        console.error("Telegram notify failed:", e);
+      }
+      setCardTelco("");
+      setCardSerial("");
+      setCardCode("");
+      setCardAmount(0);
+    }
+    setSelectedPkg(null);
+    setCardSubmitting(false);
   };
 
   return (
@@ -167,40 +224,155 @@ export default function BuyKey() {
           </div>
         ) : (
           <div className="space-y-4" style={{ animation: "fadeIn 0.4s ease-out" }}>
-            <div className="rounded-2xl p-6 space-y-4" style={{
-              background: "#fff",
-              boxShadow: "0 2px 15px rgba(0,0,0,0.06)",
-            }}>
-              <h2 className="text-center font-black text-lg" style={{ color: "#1f2937" }}>💳 Thanh Toán - Gói {pkg?.label}</h2>
-              <p className="text-center text-3xl font-black" style={{ color: "#ef4444" }}>{pkg && formatVND(pkg.price)}</p>
-
-              <div className="flex justify-center">
-                <div className="rounded-xl overflow-hidden border-2 p-2" style={{ borderColor: "rgba(0,0,0,0.08)", background: "#fff" }}>
-                  <img src="/images/qr-payment.jpeg" alt="QR Thanh toán" className="w-56 h-auto rounded-lg" />
-                </div>
-              </div>
-
-              <div className="p-4 rounded-xl space-y-2 text-sm" style={{ background: "#f8f9fa" }}>
-                <p style={{ color: "#6b7280" }}>Ngân hàng: <span className="font-bold" style={{ color: "#1f2937" }}>MSB</span></p>
-                <p style={{ color: "#6b7280" }}>Chủ TK: <span className="font-bold" style={{ color: "#1f2937" }}>Nguyen Van Minh</span></p>
-                <p style={{ color: "#6b7280" }}>STK: <span className="font-bold" style={{ color: "#ef4444" }}>4526032009</span></p>
-                <p style={{ color: "#6b7280" }}>Nội dung CK: <span className="font-mono font-bold" style={{ color: "#ef4444" }}>{transferContent}</span></p>
-              </div>
-
-              <div className="text-center text-xs p-2 rounded-lg" style={{ background: "rgba(239,68,68,0.08)", color: "#ef4444" }}>
-                ⚠️ Quét mã QR hoặc chuyển khoản, ghi đúng nội dung CK!
-              </div>
-
-              <button onClick={handleConfirmPayment} disabled={confirming}
-                className="w-full py-4 rounded-xl font-black text-base tracking-wider disabled:opacity-60"
-                style={{ background: "linear-gradient(135deg, #f97316, #ffd700)", color: "#1a0a00" }}>
-                {confirming ? "Đang xử lý..." : "✅ Đã Chuyển Khoản - Gửi Yêu Cầu"}
+            {/* Payment method tabs */}
+            <div className="flex gap-2 p-1 rounded-xl" style={{ background: "#e5e7eb" }}>
+              <button
+                onClick={() => setPaymentTab("bank")}
+                className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg font-bold text-sm transition-all"
+                style={{
+                  background: paymentTab === "bank" ? "#fff" : "transparent",
+                  color: paymentTab === "bank" ? "#4f46e5" : "#6b7280",
+                  boxShadow: paymentTab === "bank" ? "0 1px 4px rgba(0,0,0,0.1)" : "none"
+                }}
+              >
+                <CreditCard className="w-4 h-4" /> Chuyển khoản
               </button>
-
-              <button onClick={() => setSelectedPkg(null)} className="w-full py-3 rounded-xl font-bold text-sm" style={{ color: "#9ca3af" }}>
-                ← Quay lại chọn gói
+              <button
+                onClick={() => setPaymentTab("card")}
+                className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg font-bold text-sm transition-all"
+                style={{
+                  background: paymentTab === "card" ? "#fff" : "transparent",
+                  color: paymentTab === "card" ? "#4f46e5" : "#6b7280",
+                  boxShadow: paymentTab === "card" ? "0 1px 4px rgba(0,0,0,0.1)" : "none"
+                }}
+              >
+                <Smartphone className="w-4 h-4" /> Thẻ cào
               </button>
             </div>
+
+            {paymentTab === "bank" ? (
+              /* Bank transfer payment */
+              <div className="rounded-2xl p-6 space-y-4" style={{
+                background: "#fff",
+                boxShadow: "0 2px 15px rgba(0,0,0,0.06)",
+              }}>
+                <h2 className="text-center font-black text-lg" style={{ color: "#1f2937" }}>💳 Thanh Toán - Gói {pkg?.label}</h2>
+                <p className="text-center text-3xl font-black" style={{ color: "#ef4444" }}>{pkg && formatVND(pkg.price)}</p>
+
+                <div className="flex justify-center">
+                  <div className="rounded-xl overflow-hidden border-2 p-2" style={{ borderColor: "rgba(0,0,0,0.08)", background: "#fff" }}>
+                    <img src="/images/qr-payment.jpeg" alt="QR Thanh toán" className="w-56 h-auto rounded-lg" />
+                  </div>
+                </div>
+
+                <div className="p-4 rounded-xl space-y-2 text-sm" style={{ background: "#f8f9fa" }}>
+                  <p style={{ color: "#6b7280" }}>Ngân hàng: <span className="font-bold" style={{ color: "#1f2937" }}>MSB</span></p>
+                  <p style={{ color: "#6b7280" }}>Chủ TK: <span className="font-bold" style={{ color: "#1f2937" }}>Nguyen Van Minh</span></p>
+                  <p style={{ color: "#6b7280" }}>STK: <span className="font-bold" style={{ color: "#ef4444" }}>4526032009</span></p>
+                  <p style={{ color: "#6b7280" }}>Nội dung CK: <span className="font-mono font-bold" style={{ color: "#ef4444" }}>{transferContent}</span></p>
+                </div>
+
+                <div className="text-center text-xs p-2 rounded-lg" style={{ background: "rgba(239,68,68,0.08)", color: "#ef4444" }}>
+                  ⚠️ Quét mã QR hoặc chuyển khoản, ghi đúng nội dung CK!
+                </div>
+
+                <button onClick={handleConfirmPayment} disabled={confirming}
+                  className="w-full py-4 rounded-xl font-black text-base tracking-wider disabled:opacity-60"
+                  style={{ background: "linear-gradient(135deg, #f97316, #ffd700)", color: "#1a0a00" }}>
+                  {confirming ? "Đang xử lý..." : "✅ Đã Chuyển Khoản - Gửi Yêu Cầu"}
+                </button>
+              </div>
+            ) : (
+              /* Card top-up payment */
+              <div className="rounded-2xl p-6 space-y-4" style={{
+                background: "#fff",
+                boxShadow: "0 2px 15px rgba(0,0,0,0.06)",
+              }}>
+                <h2 className="text-center font-black text-lg" style={{ color: "#1f2937" }}>📱 Nạp Thẻ Cào - Gói {pkg?.label}</h2>
+                <p className="text-center text-3xl font-black" style={{ color: "#ef4444" }}>{pkg && formatVND(pkg.price)}</p>
+
+                {/* Telco selection */}
+                <div>
+                  <p className="text-sm font-bold mb-2" style={{ color: "#374151" }}>Chọn nhà mạng:</p>
+                  <div className="grid grid-cols-3 gap-2">
+                    {TELCOS.map((t) => (
+                      <button
+                        key={t.id}
+                        onClick={() => setCardTelco(t.id)}
+                        className="py-2.5 rounded-xl font-bold text-xs transition-all"
+                        style={{
+                          background: cardTelco === t.id ? t.color : "#f3f4f6",
+                          color: cardTelco === t.id ? "#fff" : "#374151",
+                          border: cardTelco === t.id ? `2px solid ${t.color}` : "2px solid transparent",
+                          boxShadow: cardTelco === t.id ? `0 2px 8px ${t.color}40` : "none"
+                        }}
+                      >
+                        {t.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Card amount */}
+                <div>
+                  <p className="text-sm font-bold mb-2" style={{ color: "#374151" }}>Mệnh giá thẻ:</p>
+                  <div className="grid grid-cols-3 gap-2">
+                    {CARD_AMOUNTS.map((a) => (
+                      <button
+                        key={a}
+                        onClick={() => setCardAmount(a)}
+                        className="py-2.5 rounded-xl font-bold text-xs transition-all"
+                        style={{
+                          background: cardAmount === a ? "linear-gradient(135deg, #4f46e5, #7c3aed)" : "#f3f4f6",
+                          color: cardAmount === a ? "#fff" : "#374151",
+                          border: cardAmount === a ? "2px solid #4f46e5" : "2px solid transparent",
+                        }}
+                      >
+                        {formatVND(a)}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Serial */}
+                <div>
+                  <p className="text-sm font-bold mb-1" style={{ color: "#374151" }}>Số Serial:</p>
+                  <input
+                    value={cardSerial}
+                    onChange={(e) => setCardSerial(e.target.value)}
+                    placeholder="Nhập số serial thẻ"
+                    className="w-full px-4 py-3 rounded-xl text-sm font-mono"
+                    style={{ background: "#f3f4f6", border: "1px solid #e5e7eb", color: "#1f2937" }}
+                  />
+                </div>
+
+                {/* Card code */}
+                <div>
+                  <p className="text-sm font-bold mb-1" style={{ color: "#374151" }}>Mã thẻ:</p>
+                  <input
+                    value={cardCode}
+                    onChange={(e) => setCardCode(e.target.value)}
+                    placeholder="Nhập mã thẻ cào"
+                    className="w-full px-4 py-3 rounded-xl text-sm font-mono"
+                    style={{ background: "#f3f4f6", border: "1px solid #e5e7eb", color: "#1f2937" }}
+                  />
+                </div>
+
+                <div className="text-center text-xs p-2 rounded-lg" style={{ background: "rgba(239,68,68,0.08)", color: "#ef4444" }}>
+                  ⚠️ Nhập đúng thông tin thẻ, thẻ sai hoặc đã sử dụng sẽ không được hoàn!
+                </div>
+
+                <button onClick={handleCardTopup} disabled={cardSubmitting}
+                  className="w-full py-4 rounded-xl font-black text-base tracking-wider disabled:opacity-60"
+                  style={{ background: "linear-gradient(135deg, #4f46e5, #7c3aed)", color: "#fff" }}>
+                  {cardSubmitting ? "Đang xử lý..." : "📱 Gửi Thẻ Cào"}
+                </button>
+              </div>
+            )}
+
+            <button onClick={() => { setSelectedPkg(null); setPaymentTab("bank"); }} className="w-full py-3 rounded-xl font-bold text-sm" style={{ color: "#9ca3af" }}>
+              ← Quay lại chọn gói
+            </button>
           </div>
         )}
 
