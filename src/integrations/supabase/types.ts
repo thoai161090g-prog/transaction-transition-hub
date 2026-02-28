@@ -121,18 +121,21 @@ export type Database = {
       }
       profiles: {
         Row: {
+          balance: number
           created_at: string
           email: string | null
           id: string
           user_id: string
         }
         Insert: {
+          balance?: number
           created_at?: string
           email?: string | null
           id?: string
           user_id: string
         }
         Update: {
+          balance?: number
           created_at?: string
           email?: string | null
           id?: string
@@ -196,6 +199,39 @@ export type Database = {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
+        }
+        Relationships: []
+      }
+      withdrawals: {
+        Row: {
+          account_holder: string
+          account_number: string
+          admin_user_id: string
+          amount: number
+          bank_name: string
+          created_at: string
+          id: string
+          status: string
+        }
+        Insert: {
+          account_holder: string
+          account_number: string
+          admin_user_id: string
+          amount: number
+          bank_name: string
+          created_at?: string
+          id?: string
+          status?: string
+        }
+        Update: {
+          account_holder?: string
+          account_number?: string
+          admin_user_id?: string
+          amount?: number
+          bank_name?: string
+          created_at?: string
+          id?: string
+          status?: string
         }
         Relationships: []
       }

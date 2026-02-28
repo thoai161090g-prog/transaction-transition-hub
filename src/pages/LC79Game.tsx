@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -23,7 +24,7 @@ export default function LC79Game() {
   const dragState = useRef({ dragging: false, startX: 0, startY: 0, startLeft: 50, startTop: 50 });
   const [botPos, setBotPos] = useState({ x: 50, y: 50 });
 
-  const API_URL = "https://lc79dudoan-1.onrender.com/md5";
+  const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
   const POLL_MS = 8000;
 
   useEffect(() => {
@@ -32,10 +33,9 @@ export default function LC79Game() {
 
   const fetchData = useCallback(async () => {
     try {
-      const res = await fetch(API_URL, { cache: "no-store" });
-      if (!res.ok) throw new Error("API error");
-      const j = await res.json();
-      setData(j);
+      const { data: result, error } = await supabase.functions.invoke("lc79-proxy");
+      if (error) throw error;
+      setData(result);
       setOnline(true);
     } catch {
       setOnline(false);
@@ -97,10 +97,10 @@ export default function LC79Game() {
     );
   }
 
-  const phien = data ? (Number(data.phien) + 1) : "…";
-  const duDoan = data?.du_doan ?? "…";
-  const confidence = data?.confidence ?? "…";
-  const tyLe = data?.ty_le_thanh_cong ?? "…";
+  const phien = data?.Phien_hien_tai ?? data?.phien ?? "…";
+  const duDoan = data?.Du_doan_cuoi_cung ?? data?.du_doan ?? "…";
+  const ketQua = data?.Ket_qua ?? data?.ket_qua ?? "…";
+  const tong = data?.Tong ?? data?.tong ?? "…";
 
   const duDoanColor = (() => {
     const low = (duDoan + "").toLowerCase();
@@ -157,13 +157,13 @@ export default function LC79Game() {
 
           {/* Summary */}
           <div className="font-extrabold text-base mb-2">
-            {tyLe} • {confidence} • <span style={{ color: duDoanColor }}>{duDoan}</span> • Phiên: {phien}
+            KQ: {ketQua} • Tổng: {tong} • <span style={{ color: duDoanColor }}>{duDoan}</span> • Phiên: {phien}
           </div>
 
           {/* Details */}
           <div className="space-y-1 text-sm">
-            <p className="opacity-90">Tỉ lệ: <span className="font-extrabold" style={{ color: "#22d3ee" }}>{tyLe}</span></p>
-            <p className="opacity-90">Độ tin cậy: <span className="font-extrabold" style={{ color: "#facc15" }}>{confidence}</span></p>
+            <p className="opacity-90">Kết quả: <span className="font-extrabold" style={{ color: "#22d3ee" }}>{ketQua}</span></p>
+            <p className="opacity-90">Tổng: <span className="font-extrabold" style={{ color: "#facc15" }}>{tong}</span></p>
             <p className="opacity-90">Dự đoán: <span className="font-extrabold" style={{ color: duDoanColor }}>{duDoan}</span></p>
             <p className="opacity-90">Phiên: <span className="font-extrabold">{phien}</span></p>
           </div>
