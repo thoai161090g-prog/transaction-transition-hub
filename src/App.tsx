@@ -12,6 +12,7 @@ import History from "./pages/History";
 import GameDetail from "./pages/GameDetail";
 import BackgroundMusic from "./components/BackgroundMusic";
 import ResetPassword from "./pages/ResetPassword";
+import LC79Game from "./pages/LC79Game";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -38,6 +39,7 @@ const App = () => (
             <Route path="/buy-key" element={<ProtectedRoute><BuyKey /></ProtectedRoute>} />
             <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
             <Route path="/history" element={<ProtectedRoute><History /></ProtectedRoute>} />
+            <Route path="/game/lc79" element={<ProtectedRoute><LC79Game /></ProtectedRoute>} />
             <Route path="/game/:id" element={<ProtectedRoute><GameDetail /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>

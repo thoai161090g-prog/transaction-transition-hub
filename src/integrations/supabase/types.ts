@@ -50,6 +50,42 @@ export type Database = {
         }
         Relationships: []
       }
+      card_topups: {
+        Row: {
+          amount: number
+          card_code: string
+          created_at: string
+          id: string
+          package: string
+          serial_number: string
+          status: string
+          telco: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          card_code: string
+          created_at?: string
+          id?: string
+          package: string
+          serial_number: string
+          status?: string
+          telco: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          card_code?: string
+          created_at?: string
+          id?: string
+          package?: string
+          serial_number?: string
+          status?: string
+          telco?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       license_keys: {
         Row: {
           created_at: string
