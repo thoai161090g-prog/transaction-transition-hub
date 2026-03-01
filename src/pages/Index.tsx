@@ -1,31 +1,65 @@
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { GAMES } from "@/lib/md5-analyzer";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Menu } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import Fireworks from "@/components/Fireworks";
+import { formatVND } from "@/lib/md5-analyzer";
 
 const GAME_COLORS: Record<string, { bg: string; iconBg: string }> = {
+  sunwin: { bg: "rgba(239,68,68,0.15)", iconBg: "linear-gradient(135deg, #ef4444, #dc2626)" },
+  hitclub: { bg: "rgba(249,115,22,0.15)", iconBg: "linear-gradient(135deg, #f97316, #ea580c)" },
   "68gamebai": { bg: "rgba(59,130,246,0.15)", iconBg: "linear-gradient(135deg, #3b82f6, #2563eb)" },
-  "lc79": { bg: "rgba(234,179,8,0.15)", iconBg: "linear-gradient(135deg, #eab308, #ca8a04)" },
-  "thienduong": { bg: "rgba(249,115,22,0.15)", iconBg: "linear-gradient(135deg, #f97316, #ea580c)" },
-  "sao789": { bg: "rgba(168,85,247,0.15)", iconBg: "linear-gradient(135deg, #a855f7, #7c3aed)" },
-  "betvip": { bg: "rgba(234,179,8,0.15)", iconBg: "linear-gradient(135deg, #eab308, #d97706)" },
-  "sunwin": { bg: "rgba(239,68,68,0.15)", iconBg: "linear-gradient(135deg, #ef4444, #dc2626)" },
+  sao789: { bg: "rgba(168,85,247,0.15)", iconBg: "linear-gradient(135deg, #a855f7, #7c3aed)" },
+  son789: { bg: "rgba(34,197,94,0.15)", iconBg: "linear-gradient(135deg, #22c55e, #16a34a)" },
+  sumclub: { bg: "rgba(16,185,129,0.15)", iconBg: "linear-gradient(135deg, #10b981, #059669)" },
+  ta28: { bg: "rgba(56,189,248,0.15)", iconBg: "linear-gradient(135deg, #38bdf8, #0284c7)" },
+  tik88: { bg: "rgba(99,102,241,0.15)", iconBg: "linear-gradient(135deg, #6366f1, #4f46e5)" },
+  rikvip: { bg: "rgba(234,179,8,0.15)", iconBg: "linear-gradient(135deg, #eab308, #ca8a04)" },
+  betvip: { bg: "rgba(234,179,8,0.15)", iconBg: "linear-gradient(135deg, #eab308, #d97706)" },
+  b52: { bg: "rgba(107,114,128,0.15)", iconBg: "linear-gradient(135deg, #6b7280, #4b5563)" },
+  "789club": { bg: "rgba(168,85,247,0.15)", iconBg: "linear-gradient(135deg, #a855f7, #6d28d9)" },
+  lc79: { bg: "rgba(234,179,8,0.15)", iconBg: "linear-gradient(135deg, #eab308, #ca8a04)" },
+  xocdia88: { bg: "rgba(236,72,153,0.15)", iconBg: "linear-gradient(135deg, #ec4899, #db2777)" },
+  thienduong: { bg: "rgba(249,115,22,0.15)", iconBg: "linear-gradient(135deg, #f97316, #ea580c)" },
 };
 
 const GAME_SUBTITLES: Record<string, string> = {
+  sunwin: "Game bài",
+  hitclub: "Bắn cá",
   "68gamebai": "Đại lý",
-  "lc79": "Game bài",
-  "thienduong": "Trò chơi",
-  "sao789": "Slot game",
-  "betvip": "Nổ hũ",
-  "sunwin": "Game bài",
+  sao789: "Slot game",
+  son789: "Casino",
+  sumclub: "Lộc phát",
+  ta28: "Quay hũ",
+  tik88: "Tài xỉu",
+  rikvip: "Game bài",
+  betvip: "Nổ hũ",
+  b52: "B52 club",
+  "789club": "Macau",
+  lc79: "Game bài",
+  xocdia88: "Xóc đĩa",
+  thienduong: "Trò chơi",
 };
 
 export default function Index() {
   const { user, isAdmin, signOut } = useAuth();
   const navigate = useNavigate();
+  const [balance, setBalance] = useState<number>(0);
+
+  useEffect(() => {
+    if (!user) return;
+    const fetchBalance = async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("balance")
+        .eq("user_id", user.id)
+        .single();
+      if (data) setBalance(data.balance);
+    };
+    fetchBalance();
+  }, [user]);
 
   return (
     <div className="min-h-screen relative overflow-hidden" style={{
@@ -43,7 +77,7 @@ export default function Index() {
               background: "rgba(255,215,0,0.15)",
               color: "#ffd700",
               border: "1px solid rgba(255,215,0,0.2)"
-            }}>💰 VIP</span>
+            }}>💰 {formatVND(balance)}</span>
             <Sheet>
               <SheetTrigger asChild>
                 <button className="w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm" style={{
@@ -59,6 +93,7 @@ export default function Index() {
                     <p className="text-lg font-black" style={{ color: "#ffd700" }}>👑 Văn Minh</p>
                     <p className="text-[10px] tracking-[0.2em]" style={{ color: "rgba(255,255,255,0.4)" }}>UY TÍN • CHẤT LƯỢNG</p>
                     <p className="text-xs mt-2" style={{ color: "rgba(255,255,255,0.5)" }}>{user?.email}</p>
+                    <p className="text-sm mt-1 font-bold" style={{ color: "#ffd700" }}>💰 Số dư: {formatVND(balance)}</p>
                   </div>
                   {isAdmin && (
                     <button className="text-left px-4 py-3 rounded-xl font-bold text-sm transition" style={{ background: "rgba(255,215,0,0.1)", color: "#ffd700" }} onClick={() => navigate("/admin")}>
@@ -81,15 +116,28 @@ export default function Index() {
         </div>
       </header>
 
-      <section className="relative z-10 max-w-lg mx-auto px-4 py-6">
-        <div className="grid grid-cols-2 gap-4">
+      {/* Balance card */}
+      <section className="relative z-10 max-w-lg mx-auto px-4 pb-4">
+        <div className="rounded-2xl p-4" style={{
+          background: "rgba(25,35,65,0.8)",
+          border: "1px solid rgba(255,215,0,0.15)",
+        }}>
+          <p className="text-xs" style={{ color: "rgba(255,255,255,0.5)" }}>Số dư hiện tại</p>
+          <p className="text-2xl font-black" style={{ color: "#ffd700" }}>{formatVND(balance)} <span className="text-sm font-normal" style={{ color: "rgba(255,255,255,0.4)" }}>VNĐ</span></p>
+          <p className="text-[11px] mt-1 px-3 py-1 rounded-full inline-block" style={{ background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.4)" }}>ID: Thành viên</p>
+        </div>
+      </section>
+
+      <section className="relative z-10 max-w-lg mx-auto px-4 py-2">
+        <p className="text-sm font-bold mb-3 flex items-center gap-2" style={{ color: "rgba(255,255,255,0.7)" }}>🔥 Danh sách trò chơi</p>
+        <div className="grid grid-cols-3 gap-3">
           {GAMES.map((game) => {
             const colors = GAME_COLORS[game.id] || { bg: "rgba(255,255,255,0.05)", iconBg: "linear-gradient(135deg, #666, #888)" };
             const subtitle = GAME_SUBTITLES[game.id] || "";
             return (
               <div
                 key={game.id}
-                className="rounded-2xl p-5 cursor-pointer transition-all hover:scale-[1.03] active:scale-[0.97] flex flex-col items-center gap-3"
+                className="rounded-2xl p-4 cursor-pointer transition-all hover:scale-[1.03] active:scale-[0.97] flex flex-col items-center gap-2"
                 style={{
                   background: "rgba(25,35,65,0.8)",
                   border: "1px solid rgba(255,255,255,0.06)",
@@ -97,15 +145,15 @@ export default function Index() {
                 }}
                 onClick={() => navigate(`/game/${game.id}`)}
               >
-                <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl" style={{
+                <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl" style={{
                   background: colors.iconBg,
                   boxShadow: "0 4px 15px rgba(0,0,0,0.3)",
                 }}>
                   {game.icon}
                 </div>
                 <div className="text-center">
-                  <p className="font-black text-sm text-white">{game.name.toUpperCase()}</p>
-                  <p className="text-[11px]" style={{ color: "rgba(255,255,255,0.4)" }}>{subtitle}</p>
+                  <p className="font-black text-[11px] text-white">{game.name.toUpperCase()}</p>
+                  <p className="text-[10px]" style={{ color: "rgba(255,255,255,0.4)" }}>{subtitle}</p>
                 </div>
               </div>
             );
@@ -113,7 +161,7 @@ export default function Index() {
         </div>
       </section>
 
-      <section className="relative z-10 max-w-lg mx-auto px-4 pb-6">
+      <section className="relative z-10 max-w-lg mx-auto px-4 py-4">
         <div className="flex gap-3">
           <button onClick={() => navigate("/buy-key")} className="flex-1 py-3.5 rounded-2xl font-bold text-sm" style={{
             background: "linear-gradient(135deg, #f97316, #ffd700)",
