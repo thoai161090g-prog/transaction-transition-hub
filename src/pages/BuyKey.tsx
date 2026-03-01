@@ -121,16 +121,17 @@ export default function BuyKey() {
       return;
     }
     setBalancePaying(true);
-    // Deduct balance
-    const { error: balanceErr } = await supabase.from("profiles").update({ balance: balance - pkg.price }).eq("user_id", user.id);
-    if (balanceErr) { toast({ title: "Lỗi", description: balanceErr.message, variant: "destructive" }); setBalancePaying(false); return; }
-    // Create transaction
+    // Create pending transaction — admin will approve & deduct balance
     const { error } = await supabase.from("transactions").insert({
-      user_id: user.id, package: pkg.id, amount: pkg.price, status: "approved", transfer_content: `BALANCE_${user.id.slice(0, 8).toUpperCase()}_${pkg.id.toUpperCase()}`
+      user_id: user.id, package: pkg.id, amount: pkg.price, status: "pending", transfer_content: `BALANCE_${user.id.slice(0, 8).toUpperCase()}_${pkg.id.toUpperCase()}`
     });
     if (error) { toast({ title: "Lỗi", description: error.message, variant: "destructive" }); setBalancePaying(false); return; }
-    setBalance(balance - pkg.price);
-    toast({ title: "✅ Mua thành công!", description: `Đã trừ ${formatVND(pkg.price)} từ số dư. Admin sẽ kích hoạt key sớm.` });
+    toast({ title: "✅ Đã gửi yêu cầu!", description: "Vui lòng chờ Admin duyệt và kích hoạt key." });
+    try {
+      await supabase.functions.invoke("telegram-notify", {
+        body: { email: user.email, amount: pkg.price, package_name: pkg.label, transfer_content: `BALANCE_${user.id.slice(0,8).toUpperCase()}_${pkg.id.toUpperCase()}`, status: "balance_pending" },
+      });
+    } catch (e) { console.error("Telegram notify failed:", e); }
     setSelectedPkg(null);
     setBalancePaying(false);
   };
