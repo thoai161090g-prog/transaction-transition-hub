@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { GAMES } from "@/lib/md5-analyzer";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import Fireworks from "@/components/Fireworks";
 import { formatVND } from "@/lib/md5-analyzer";
@@ -103,9 +104,30 @@ export default function Index() {
                   <button className="text-left px-4 py-3 rounded-xl font-bold text-sm transition" style={{ background: "rgba(255,215,0,0.1)", color: "#ffd700" }} onClick={() => navigate("/buy-key")}>
                     🔑 Mua Key
                   </button>
+                  <button className="text-left px-4 py-3 rounded-xl font-bold text-sm transition" style={{ background: "rgba(255,215,0,0.1)", color: "#ffd700" }} onClick={() => navigate("/buy-key?tab=card")}>
+                    💳 Nạp tiền bằng thẻ
+                  </button>
                   <button className="text-left px-4 py-3 rounded-xl font-bold text-sm transition" style={{ background: "rgba(255,215,0,0.1)", color: "#ffd700" }} onClick={() => navigate("/history")}>
                     📜 Lịch sử
                   </button>
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <button className="text-left px-4 py-3 rounded-xl font-bold text-sm transition" style={{ background: "rgba(255,215,0,0.1)", color: "#ffd700" }}>
+                        🎧 Hỗ trợ
+                      </button>
+                    </DialogTrigger>
+                    <DialogContent className="rounded-2xl border-0 max-w-sm" style={{ background: "#fff" }}>
+                      <h3 className="text-center text-lg font-bold text-gray-800 mb-4">Liên hệ hỗ trợ</h3>
+                      <a href="https://t.me/nhan161019" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-4 rounded-xl mb-2 hover:bg-gray-50 transition" style={{ background: "#f5f5f5" }}>
+                        <span className="w-10 h-10 rounded-full flex items-center justify-center text-white text-lg" style={{ background: "#229ED9" }}>✈</span>
+                        <span className="font-bold text-gray-800">THÀNH NHÂN</span>
+                      </a>
+                      <a href="https://t.me/vanminh2603" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-4 rounded-xl mb-2 hover:bg-gray-50 transition" style={{ background: "#f5f5f5" }}>
+                        <span className="w-10 h-10 rounded-full flex items-center justify-center text-white text-lg" style={{ background: "#229ED9" }}>✈</span>
+                        <span className="font-bold text-gray-800">Văn Minh</span>
+                      </a>
+                    </DialogContent>
+                  </Dialog>
                   <button className="text-left px-4 py-3 rounded-xl font-bold text-sm transition text-white/50 hover:text-white" onClick={signOut}>
                     🚪 Đăng xuất
                   </button>
