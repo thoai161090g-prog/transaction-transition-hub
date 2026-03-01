@@ -24,12 +24,21 @@ export interface Game {
 }
 
 export const GAMES: Game[] = [
-  { id: "68gamebai", name: "68 Game Bài", icon: "🎴" },
-  { id: "lc79", name: "LC79", icon: "💎" },
-  { id: "thienduong", name: "Thiên Đường Trò Chơi", icon: "🏆" },
-  { id: "sao789", name: "Sao789", icon: "⭐" },
-  { id: "betvip", name: "BetVIP", icon: "🎰" },
   { id: "sunwin", name: "Sunwin", icon: "🌞" },
+  { id: "hitclub", name: "HitClub", icon: "🎯" },
+  { id: "68gamebai", name: "68 Game Bài", icon: "🎴" },
+  { id: "sao789", name: "Sao789", icon: "⭐" },
+  { id: "son789", name: "Son789", icon: "🎁" },
+  { id: "sumclub", name: "SumClub", icon: "🍀" },
+  { id: "ta28", name: "TA28", icon: "💧" },
+  { id: "tik88", name: "Tik88", icon: "🎲" },
+  { id: "rikvip", name: "RikVIP", icon: "👑" },
+  { id: "betvip", name: "BetVIP", icon: "🎰" },
+  { id: "b52", name: "B52", icon: "✈️" },
+  { id: "789club", name: "789Club", icon: "🃏" },
+  { id: "lc79", name: "LC79", icon: "💎" },
+  { id: "xocdia88", name: "Xóc Đĩa 88", icon: "🎵" },
+  { id: "thienduong", name: "Thiên Đường Trò Chơi", icon: "🏆" },
 ];
 
 export function analyzeMD5(md5: string) {

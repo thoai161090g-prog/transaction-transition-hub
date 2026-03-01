@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -65,7 +65,9 @@ export default function BuyKey() {
   const { toast } = useToast();
   const [selectedPkg, setSelectedPkg] = useState<string | null>(null);
   const [confirming, setConfirming] = useState(false);
-  const [paymentTab, setPaymentTab] = useState<"bank" | "card">("bank");
+  const [paymentTab, setPaymentTab] = useState<"bank" | "card" | "balance">("bank");
+  const [balance, setBalance] = useState<number>(0);
+  const [balancePaying, setBalancePaying] = useState(false);
 
   // Card top-up state
   const [cardTelco, setCardTelco] = useState("");
@@ -75,6 +77,13 @@ export default function BuyKey() {
   const [cardSubmitting, setCardSubmitting] = useState(false);
 
   const pkg = KEY_PACKAGES.find((p) => p.id === selectedPkg);
+
+  useEffect(() => {
+    if (!user) return;
+    supabase.from("profiles").select("balance").eq("user_id", user.id).single().then(({ data }) => {
+      if (data) setBalance(data.balance);
+    });
+  }, [user]);
   const transferContent = user ? `KEY_${user.id.slice(0, 8).toUpperCase()}_${selectedPkg?.toUpperCase()}` : "";
 
   const handleConfirmPayment = async () => {
@@ -103,6 +112,27 @@ export default function BuyKey() {
     }
     setSelectedPkg(null);
     setConfirming(false);
+  };
+
+  const handleBalancePayment = async () => {
+    if (!user || !pkg) return;
+    if (balance < pkg.price) {
+      toast({ title: "Không đủ số dư", description: `Bạn cần ${formatVND(pkg.price)} nhưng chỉ có ${formatVND(balance)}`, variant: "destructive" });
+      return;
+    }
+    setBalancePaying(true);
+    // Deduct balance
+    const { error: balanceErr } = await supabase.from("profiles").update({ balance: balance - pkg.price }).eq("user_id", user.id);
+    if (balanceErr) { toast({ title: "Lỗi", description: balanceErr.message, variant: "destructive" }); setBalancePaying(false); return; }
+    // Create transaction
+    const { error } = await supabase.from("transactions").insert({
+      user_id: user.id, package: pkg.id, amount: pkg.price, status: "approved", transfer_content: `BALANCE_${user.id.slice(0, 8).toUpperCase()}_${pkg.id.toUpperCase()}`
+    });
+    if (error) { toast({ title: "Lỗi", description: error.message, variant: "destructive" }); setBalancePaying(false); return; }
+    setBalance(balance - pkg.price);
+    toast({ title: "✅ Mua thành công!", description: `Đã trừ ${formatVND(pkg.price)} từ số dư. Admin sẽ kích hoạt key sớm.` });
+    setSelectedPkg(null);
+    setBalancePaying(false);
   };
 
   const handleCardTopup = async () => {
@@ -225,32 +255,41 @@ export default function BuyKey() {
         ) : (
           <div className="space-y-4" style={{ animation: "fadeIn 0.4s ease-out" }}>
             {/* Payment method tabs */}
-            <div className="flex gap-2 p-1 rounded-xl" style={{ background: "#e5e7eb" }}>
-              <button
-                onClick={() => setPaymentTab("bank")}
-                className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg font-bold text-sm transition-all"
-                style={{
-                  background: paymentTab === "bank" ? "#fff" : "transparent",
-                  color: paymentTab === "bank" ? "#4f46e5" : "#6b7280",
-                  boxShadow: paymentTab === "bank" ? "0 1px 4px rgba(0,0,0,0.1)" : "none"
-                }}
-              >
-                <CreditCard className="w-4 h-4" /> Chuyển khoản
-              </button>
-              <button
-                onClick={() => setPaymentTab("card")}
-                className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg font-bold text-sm transition-all"
-                style={{
-                  background: paymentTab === "card" ? "#fff" : "transparent",
-                  color: paymentTab === "card" ? "#4f46e5" : "#6b7280",
-                  boxShadow: paymentTab === "card" ? "0 1px 4px rgba(0,0,0,0.1)" : "none"
-                }}
-              >
-                <Smartphone className="w-4 h-4" /> Thẻ cào
-              </button>
+            <div className="flex gap-1 p-1 rounded-xl" style={{ background: "#e5e7eb" }}>
+              {(["balance", "bank", "card"] as const).map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setPaymentTab(tab)}
+                  className="flex-1 flex items-center justify-center gap-1 py-2.5 rounded-lg font-bold text-xs transition-all"
+                  style={{
+                    background: paymentTab === tab ? "#fff" : "transparent",
+                    color: paymentTab === tab ? "#4f46e5" : "#6b7280",
+                    boxShadow: paymentTab === tab ? "0 1px 4px rgba(0,0,0,0.1)" : "none"
+                  }}
+                >
+                  {tab === "balance" ? "💰 Số dư" : tab === "bank" ? "💳 CK" : "📱 Thẻ cào"}
+                </button>
+              ))}
             </div>
 
-            {paymentTab === "bank" ? (
+            {paymentTab === "balance" ? (
+              <div className="rounded-2xl p-6 space-y-4" style={{ background: "#fff", boxShadow: "0 2px 15px rgba(0,0,0,0.06)" }}>
+                <h2 className="text-center font-black text-lg" style={{ color: "#1f2937" }}>💰 Thanh toán bằng số dư - Gói {pkg?.label}</h2>
+                <p className="text-center text-3xl font-black" style={{ color: "#ef4444" }}>{pkg && formatVND(pkg.price)}</p>
+                <div className="p-4 rounded-xl text-center" style={{ background: "#f8f9fa" }}>
+                  <p className="text-sm" style={{ color: "#6b7280" }}>Số dư hiện tại</p>
+                  <p className="text-2xl font-black" style={{ color: balance >= (pkg?.price || 0) ? "#22c55e" : "#ef4444" }}>{formatVND(balance)}</p>
+                  {pkg && balance < pkg.price && (
+                    <p className="text-xs mt-1" style={{ color: "#ef4444" }}>⚠️ Không đủ số dư, cần thêm {formatVND(pkg.price - balance)}</p>
+                  )}
+                </div>
+                <button onClick={handleBalancePayment} disabled={balancePaying || balance < (pkg?.price || 0)}
+                  className="w-full py-4 rounded-xl font-black text-base tracking-wider disabled:opacity-60"
+                  style={{ background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff" }}>
+                  {balancePaying ? "Đang xử lý..." : "💰 Thanh toán ngay"}
+                </button>
+              </div>
+            ) : paymentTab === "bank" ? (
               /* Bank transfer payment */
               <div className="rounded-2xl p-6 space-y-4" style={{
                 background: "#fff",
