@@ -7,6 +7,7 @@ import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import BuyKey from "./pages/BuyKey";
+import TopUp from "./pages/TopUp";
 import Admin from "./pages/Admin";
 import History from "./pages/History";
 import GameDetail from "./pages/GameDetail";
@@ -37,6 +38,7 @@ const App = () => (
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
             <Route path="/buy-key" element={<ProtectedRoute><BuyKey /></ProtectedRoute>} />
+            <Route path="/topup" element={<ProtectedRoute><TopUp /></ProtectedRoute>} />
             <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
             <Route path="/history" element={<ProtectedRoute><History /></ProtectedRoute>} />
             <Route path="/game/lc79" element={<ProtectedRoute><LC79Game /></ProtectedRoute>} />

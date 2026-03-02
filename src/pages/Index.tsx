@@ -122,7 +122,7 @@ export default function Index() {
                     <MenuButton icon="🔧" label="Admin" onClick={() => navigate("/admin")} />
                   )}
                   <MenuButton icon="🔑" label="Mua Key" onClick={() => navigate("/buy-key")} />
-                  <MenuButton icon="💳" label="Nạp tiền bằng thẻ" onClick={() => navigate("/buy-key?tab=card")} />
+                  <MenuButton icon="💳" label="Nạp tiền" onClick={() => navigate("/topup")} />
                   <MenuButton icon="📜" label="Lịch sử" onClick={() => navigate("/history")} />
                   <Dialog>
                     <DialogTrigger asChild>
