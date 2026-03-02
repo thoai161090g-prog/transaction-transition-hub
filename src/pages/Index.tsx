@@ -8,24 +8,6 @@ import { supabase } from "@/integrations/supabase/client";
 import Fireworks from "@/components/Fireworks";
 import { formatVND } from "@/lib/md5-analyzer";
 
-const GAME_COLORS: Record<string, { bg: string; iconBg: string }> = {
-  sunwin: { bg: "rgba(239,68,68,0.15)", iconBg: "linear-gradient(135deg, #ef4444, #dc2626)" },
-  hitclub: { bg: "rgba(249,115,22,0.15)", iconBg: "linear-gradient(135deg, #f97316, #ea580c)" },
-  "68gamebai": { bg: "rgba(59,130,246,0.15)", iconBg: "linear-gradient(135deg, #3b82f6, #2563eb)" },
-  sao789: { bg: "rgba(168,85,247,0.15)", iconBg: "linear-gradient(135deg, #a855f7, #7c3aed)" },
-  son789: { bg: "rgba(34,197,94,0.15)", iconBg: "linear-gradient(135deg, #22c55e, #16a34a)" },
-  sumclub: { bg: "rgba(16,185,129,0.15)", iconBg: "linear-gradient(135deg, #10b981, #059669)" },
-  ta28: { bg: "rgba(56,189,248,0.15)", iconBg: "linear-gradient(135deg, #38bdf8, #0284c7)" },
-  tik88: { bg: "rgba(99,102,241,0.15)", iconBg: "linear-gradient(135deg, #6366f1, #4f46e5)" },
-  rikvip: { bg: "rgba(234,179,8,0.15)", iconBg: "linear-gradient(135deg, #eab308, #ca8a04)" },
-  betvip: { bg: "rgba(234,179,8,0.15)", iconBg: "linear-gradient(135deg, #eab308, #d97706)" },
-  b52: { bg: "rgba(107,114,128,0.15)", iconBg: "linear-gradient(135deg, #6b7280, #4b5563)" },
-  "789club": { bg: "rgba(168,85,247,0.15)", iconBg: "linear-gradient(135deg, #a855f7, #6d28d9)" },
-  lc79: { bg: "rgba(234,179,8,0.15)", iconBg: "linear-gradient(135deg, #eab308, #ca8a04)" },
-  xocdia88: { bg: "rgba(236,72,153,0.15)", iconBg: "linear-gradient(135deg, #ec4899, #db2777)" },
-  thienduong: { bg: "rgba(249,115,22,0.15)", iconBg: "linear-gradient(135deg, #f97316, #ea580c)" },
-};
-
 const GAME_SUBTITLES: Record<string, string> = {
   sunwin: "Game bài",
   hitclub: "Bắn cá",
@@ -64,72 +46,143 @@ export default function Index() {
 
   return (
     <div className="min-h-screen relative overflow-hidden" style={{
-      background: "linear-gradient(180deg, #0f1729 0%, #1a2140 50%, #0f1729 100%)"
+      background: "linear-gradient(180deg, #05080f 0%, #0a1628 40%, #101d35 70%, #05080f 100%)"
     }}>
       <Fireworks />
 
+      {/* Ambient glow effects */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-[-200px] left-1/2 -translate-x-1/2 w-[800px] h-[400px] rounded-full opacity-15" style={{
+          background: "radial-gradient(ellipse, #ffd700 0%, transparent 70%)",
+          filter: "blur(100px)",
+        }} />
+        <div className="absolute bottom-[-100px] right-[-100px] w-[400px] h-[400px] rounded-full opacity-10" style={{
+          background: "radial-gradient(circle, #f97316 0%, transparent 70%)",
+          filter: "blur(80px)",
+        }} />
+      </div>
+
+      {/* Header */}
       <header className="relative z-10 py-4 px-4">
         <div className="max-w-lg mx-auto flex items-center justify-between">
-          <h1 className="text-lg font-black tracking-wider flex items-center gap-2" style={{ color: "#ffd700" }}>
+          <h1 className="text-xl font-black tracking-wider flex items-center gap-2" style={{
+            background: "linear-gradient(135deg, #ffd700, #ffae42, #ffd700)",
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+            filter: "drop-shadow(0 2px 8px rgba(255,215,0,0.4))"
+          }}>
             👑 <span>Văn Minh</span>
           </h1>
           <div className="flex items-center gap-3">
-            <span className="text-xs px-3 py-1 rounded-full font-bold" style={{
-              background: "rgba(255,215,0,0.15)",
+            <span className="text-xs px-3 py-1.5 rounded-full font-bold backdrop-blur-md" style={{
+              background: "linear-gradient(135deg, rgba(255,215,0,0.15), rgba(255,174,66,0.08))",
               color: "#ffd700",
-              border: "1px solid rgba(255,215,0,0.2)"
+              border: "1px solid rgba(255,215,0,0.25)",
+              boxShadow: "0 2px 12px rgba(255,215,0,0.1)"
             }}>💰 {formatVND(balance)}</span>
             <Sheet>
               <SheetTrigger asChild>
-                <button className="w-9 h-9 rounded-full flex items-center justify-center font-bold text-sm" style={{
-                  background: "linear-gradient(135deg, #f97316, #ffd700)",
+                <button className="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm transition-all hover:scale-105" style={{
+                  background: "linear-gradient(135deg, #ffd700, #f97316)",
                   color: "#1a0a00",
+                  boxShadow: "0 4px 15px rgba(255,215,0,0.3)"
                 }}>
                   {user?.email?.[0]?.toUpperCase() || "U"}
                 </button>
               </SheetTrigger>
-              <SheetContent side="right" className="w-64 border-0" style={{ background: "#1a2140" }}>
-                <nav className="flex flex-col gap-3 mt-8">
-                  <div className="text-center mb-4">
-                    <p className="text-lg font-black" style={{ color: "#ffd700" }}>👑 Văn Minh</p>
-                    <p className="text-[10px] tracking-[0.2em]" style={{ color: "rgba(255,255,255,0.4)" }}>UY TÍN • CHẤT LƯỢNG</p>
-                    <p className="text-xs mt-2" style={{ color: "rgba(255,255,255,0.5)" }}>{user?.email}</p>
-                    <p className="text-sm mt-1 font-bold" style={{ color: "#ffd700" }}>💰 Số dư: {formatVND(balance)}</p>
+              <SheetContent side="right" className="w-72 border-0 p-0" style={{
+                background: "linear-gradient(180deg, #0a1628, #101d35, #0a1628)",
+                borderLeft: "1px solid rgba(255,215,0,0.1)"
+              }}>
+                <nav className="flex flex-col gap-2 p-6 mt-4">
+                  {/* Profile section */}
+                  <div className="text-center mb-6 pb-6" style={{ borderBottom: "1px solid rgba(255,215,0,0.1)" }}>
+                    <div className="w-16 h-16 rounded-2xl mx-auto mb-3 flex items-center justify-center text-2xl font-black" style={{
+                      background: "linear-gradient(135deg, #ffd700, #f97316)",
+                      color: "#1a0a00",
+                      boxShadow: "0 4px 20px rgba(255,215,0,0.3)"
+                    }}>
+                      {user?.email?.[0]?.toUpperCase() || "U"}
+                    </div>
+                    <p className="text-lg font-black" style={{
+                      background: "linear-gradient(135deg, #ffd700, #ffae42)",
+                      WebkitBackgroundClip: "text",
+                      WebkitTextFillColor: "transparent",
+                    }}>👑 Văn Minh</p>
+                    <p className="text-[10px] tracking-[0.25em] mt-1" style={{ color: "rgba(255,215,0,0.4)" }}>UY TÍN • CHẤT LƯỢNG</p>
+                    <p className="text-xs mt-2" style={{ color: "rgba(255,255,255,0.4)" }}>{user?.email}</p>
+                    <div className="mt-3 px-4 py-2 rounded-xl" style={{
+                      background: "linear-gradient(135deg, rgba(255,215,0,0.1), rgba(255,174,66,0.05))",
+                      border: "1px solid rgba(255,215,0,0.15)"
+                    }}>
+                      <p className="text-sm font-black" style={{ color: "#ffd700" }}>💰 {formatVND(balance)}</p>
+                    </div>
                   </div>
                   {isAdmin && (
-                    <button className="text-left px-4 py-3 rounded-xl font-bold text-sm transition" style={{ background: "rgba(255,215,0,0.1)", color: "#ffd700" }} onClick={() => navigate("/admin")}>
-                      🔧 Admin
-                    </button>
+                    <MenuButton icon="🔧" label="Admin" onClick={() => navigate("/admin")} />
                   )}
-                  <button className="text-left px-4 py-3 rounded-xl font-bold text-sm transition" style={{ background: "rgba(255,215,0,0.1)", color: "#ffd700" }} onClick={() => navigate("/buy-key")}>
-                    🔑 Mua Key
-                  </button>
-                  <button className="text-left px-4 py-3 rounded-xl font-bold text-sm transition" style={{ background: "rgba(255,215,0,0.1)", color: "#ffd700" }} onClick={() => navigate("/buy-key?tab=card")}>
-                    💳 Nạp tiền bằng thẻ
-                  </button>
-                  <button className="text-left px-4 py-3 rounded-xl font-bold text-sm transition" style={{ background: "rgba(255,215,0,0.1)", color: "#ffd700" }} onClick={() => navigate("/history")}>
-                    📜 Lịch sử
-                  </button>
+                  <MenuButton icon="🔑" label="Mua Key" onClick={() => navigate("/buy-key")} />
+                  <MenuButton icon="💳" label="Nạp tiền bằng thẻ" onClick={() => navigate("/buy-key?tab=card")} />
+                  <MenuButton icon="📜" label="Lịch sử" onClick={() => navigate("/history")} />
                   <Dialog>
                     <DialogTrigger asChild>
-                      <button className="text-left px-4 py-3 rounded-xl font-bold text-sm transition" style={{ background: "rgba(255,215,0,0.1)", color: "#ffd700" }}>
-                        🎧 Hỗ trợ
+                      <button className="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all hover:scale-[1.02]" style={{
+                        background: "rgba(255,215,0,0.06)",
+                        border: "1px solid rgba(255,215,0,0.08)",
+                        color: "#ffd700"
+                      }}>
+                        <span className="w-8 h-8 rounded-lg flex items-center justify-center text-base" style={{
+                          background: "linear-gradient(135deg, rgba(255,215,0,0.2), rgba(255,174,66,0.1))"
+                        }}>🎧</span>
+                        Hỗ trợ
                       </button>
                     </DialogTrigger>
-                    <DialogContent className="rounded-2xl border-0 max-w-sm" style={{ background: "#fff" }}>
-                      <h3 className="text-center text-lg font-bold text-gray-800 mb-4">Liên hệ hỗ trợ</h3>
-                      <a href="https://t.me/nhan161019" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-4 rounded-xl mb-2 hover:bg-gray-50 transition" style={{ background: "#f5f5f5" }}>
-                        <span className="w-10 h-10 rounded-full flex items-center justify-center text-white text-lg" style={{ background: "#229ED9" }}>✈</span>
-                        <span className="font-bold text-gray-800">THÀNH NHÂN</span>
+                    <DialogContent className="rounded-2xl border-0 max-w-sm p-6" style={{
+                      background: "linear-gradient(135deg, #0a1628, #101d35)",
+                      border: "1px solid rgba(255,215,0,0.15)"
+                    }}>
+                      <h3 className="text-center text-lg font-black mb-5" style={{
+                        background: "linear-gradient(135deg, #ffd700, #ffae42)",
+                        WebkitBackgroundClip: "text",
+                        WebkitTextFillColor: "transparent",
+                      }}>🎧 Liên hệ hỗ trợ</h3>
+                      <a href="https://t.me/nhan161019" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-4 rounded-xl mb-3 transition-all hover:scale-[1.02]" style={{
+                        background: "rgba(255,215,0,0.06)",
+                        border: "1px solid rgba(255,215,0,0.1)"
+                      }}>
+                        <span className="w-11 h-11 rounded-xl flex items-center justify-center text-lg" style={{
+                          background: "linear-gradient(135deg, #229ED9, #1a7fb8)",
+                          boxShadow: "0 4px 12px rgba(34,158,217,0.3)"
+                        }}>✈️</span>
+                        <div>
+                          <span className="font-black text-sm" style={{ color: "#fff" }}>THÀNH NHÂN</span>
+                          <p className="text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>@nhan161019</p>
+                        </div>
                       </a>
-                      <a href="https://t.me/vanminh2603" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-4 rounded-xl mb-2 hover:bg-gray-50 transition" style={{ background: "#f5f5f5" }}>
-                        <span className="w-10 h-10 rounded-full flex items-center justify-center text-white text-lg" style={{ background: "#229ED9" }}>✈</span>
-                        <span className="font-bold text-gray-800">Văn Minh</span>
+                      <a href="https://t.me/vanminh2603" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-4 rounded-xl transition-all hover:scale-[1.02]" style={{
+                        background: "rgba(255,215,0,0.06)",
+                        border: "1px solid rgba(255,215,0,0.1)"
+                      }}>
+                        <span className="w-11 h-11 rounded-xl flex items-center justify-center text-lg" style={{
+                          background: "linear-gradient(135deg, #229ED9, #1a7fb8)",
+                          boxShadow: "0 4px 12px rgba(34,158,217,0.3)"
+                        }}>✈️</span>
+                        <div>
+                          <span className="font-black text-sm" style={{ color: "#fff" }}>Văn Minh</span>
+                          <p className="text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>@vanminh2603</p>
+                        </div>
                       </a>
                     </DialogContent>
                   </Dialog>
-                  <button className="text-left px-4 py-3 rounded-xl font-bold text-sm transition text-white/50 hover:text-white" onClick={signOut}>
-                    🚪 Đăng xuất
+                  <button className="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all hover:scale-[1.02] mt-4" style={{
+                    background: "rgba(239,68,68,0.08)",
+                    border: "1px solid rgba(239,68,68,0.12)",
+                    color: "rgba(255,255,255,0.4)"
+                  }} onClick={signOut}>
+                    <span className="w-8 h-8 rounded-lg flex items-center justify-center text-base" style={{
+                      background: "rgba(239,68,68,0.15)"
+                    }}>🚪</span>
+                    Đăng xuất
                   </button>
                 </nav>
               </SheetContent>
@@ -139,36 +192,57 @@ export default function Index() {
       </header>
 
       {/* Balance card */}
-      <section className="relative z-10 max-w-lg mx-auto px-4 pb-4">
-        <div className="rounded-2xl p-4" style={{
-          background: "rgba(25,35,65,0.8)",
-          border: "1px solid rgba(255,215,0,0.15)",
+      <section className="relative z-10 max-w-lg mx-auto px-4 pb-5">
+        <div className="rounded-2xl p-5 relative overflow-hidden" style={{
+          background: "linear-gradient(135deg, rgba(15,25,50,0.9), rgba(20,30,55,0.9))",
+          border: "1px solid rgba(255,215,0,0.12)",
+          boxShadow: "0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,215,0,0.08)"
         }}>
-          <p className="text-xs" style={{ color: "rgba(255,255,255,0.5)" }}>Số dư hiện tại</p>
-          <p className="text-2xl font-black" style={{ color: "#ffd700" }}>{formatVND(balance)} <span className="text-sm font-normal" style={{ color: "rgba(255,255,255,0.4)" }}>VNĐ</span></p>
-          <p className="text-[11px] mt-1 px-3 py-1 rounded-full inline-block" style={{ background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.4)" }}>ID: Thành viên</p>
+          <div className="absolute top-0 right-0 w-32 h-32 rounded-full opacity-10" style={{
+            background: "radial-gradient(circle, #ffd700, transparent)",
+            filter: "blur(30px)",
+            transform: "translate(30%, -30%)"
+          }} />
+          <div className="relative">
+            <p className="text-xs font-medium tracking-wider" style={{ color: "rgba(255,215,0,0.5)" }}>SỐ DƯ HIỆN TẠI</p>
+            <p className="text-3xl font-black mt-1" style={{
+              background: "linear-gradient(135deg, #ffd700, #ffae42, #ffd700)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              filter: "drop-shadow(0 2px 4px rgba(255,215,0,0.3))"
+            }}>{formatVND(balance)}</p>
+            <p className="text-[11px] mt-2 px-3 py-1 rounded-full inline-block font-medium" style={{
+              background: "rgba(255,215,0,0.08)",
+              color: "rgba(255,215,0,0.5)",
+              border: "1px solid rgba(255,215,0,0.1)"
+            }}>👑 Thành viên VIP</p>
+          </div>
         </div>
       </section>
 
+      {/* Games grid */}
       <section className="relative z-10 max-w-lg mx-auto px-4 py-2">
-        <p className="text-sm font-bold mb-3 flex items-center gap-2" style={{ color: "rgba(255,255,255,0.7)" }}>🔥 Danh sách trò chơi</p>
+        <p className="text-sm font-bold mb-4 flex items-center gap-2" style={{
+          background: "linear-gradient(135deg, #ffd700, #ffae42)",
+          WebkitBackgroundClip: "text",
+          WebkitTextFillColor: "transparent",
+        }}>🔥 Danh sách trò chơi</p>
         <div className="grid grid-cols-3 gap-3">
           {GAMES.map((game) => {
-            const colors = GAME_COLORS[game.id] || { bg: "rgba(255,255,255,0.05)", iconBg: "linear-gradient(135deg, #666, #888)" };
             const subtitle = GAME_SUBTITLES[game.id] || "";
             return (
               <div
                 key={game.id}
-                className="rounded-2xl p-4 cursor-pointer transition-all hover:scale-[1.03] active:scale-[0.97] flex flex-col items-center gap-2"
+                className="rounded-2xl p-3 cursor-pointer transition-all hover:scale-[1.04] active:scale-[0.96] flex flex-col items-center gap-2 group"
                 style={{
-                  background: "rgba(25,35,65,0.8)",
-                  border: "1px solid rgba(255,255,255,0.06)",
+                  background: "linear-gradient(135deg, rgba(15,25,50,0.8), rgba(20,30,55,0.6))",
+                  border: "1px solid rgba(255,215,0,0.08)",
                   boxShadow: "0 4px 20px rgba(0,0,0,0.2)"
                 }}
                 onClick={() => navigate(`/game/${game.id}`)}
               >
-                <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl overflow-hidden" style={{
-                  background: game.image ? "transparent" : colors.iconBg,
+                <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-2xl overflow-hidden transition-all group-hover:shadow-lg" style={{
+                  background: game.image ? "transparent" : "linear-gradient(135deg, rgba(255,215,0,0.2), rgba(255,174,66,0.1))",
                   boxShadow: "0 4px 15px rgba(0,0,0,0.3)",
                 }}>
                   {game.image ? (
@@ -178,8 +252,8 @@ export default function Index() {
                   )}
                 </div>
                 <div className="text-center">
-                  <p className="font-black text-[11px] text-white">{game.name.toUpperCase()}</p>
-                  <p className="text-[10px]" style={{ color: "rgba(255,255,255,0.4)" }}>{subtitle}</p>
+                  <p className="font-black text-[11px] text-white/90">{game.name.toUpperCase()}</p>
+                  <p className="text-[10px]" style={{ color: "rgba(255,215,0,0.4)" }}>{subtitle}</p>
                 </div>
               </div>
             );
@@ -187,25 +261,47 @@ export default function Index() {
         </div>
       </section>
 
-      <section className="relative z-10 max-w-lg mx-auto px-4 py-4">
+      {/* Action buttons */}
+      <section className="relative z-10 max-w-lg mx-auto px-4 py-5">
         <div className="flex gap-3">
-          <button onClick={() => navigate("/buy-key")} className="flex-1 py-3.5 rounded-2xl font-bold text-sm" style={{
-            background: "linear-gradient(135deg, #f97316, #ffd700)",
+          <button onClick={() => navigate("/buy-key")} className="flex-1 py-4 rounded-2xl font-black text-sm tracking-wider transition-all hover:scale-[1.02] active:scale-[0.98]" style={{
+            background: "linear-gradient(135deg, #ffd700, #f97316, #ffd700)",
             color: "#1a0a00",
-          }}>🔑 Mua Key</button>
-          <button onClick={signOut} className="py-3.5 px-6 rounded-2xl font-bold text-sm" style={{
-            background: "rgba(255,255,255,0.05)",
-            border: "1px solid rgba(255,255,255,0.1)",
-            color: "rgba(255,255,255,0.5)",
+            boxShadow: "0 4px 25px rgba(255,215,0,0.3), 0 0 60px rgba(255,215,0,0.1)"
+          }}>🔑 MUA KEY</button>
+          <button onClick={signOut} className="py-4 px-6 rounded-2xl font-bold text-sm transition-all hover:scale-[1.02]" style={{
+            background: "rgba(255,255,255,0.03)",
+            border: "1px solid rgba(255,255,255,0.08)",
+            color: "rgba(255,255,255,0.4)",
           }}>🚪</button>
         </div>
       </section>
 
+      {/* Footer */}
       <section className="relative z-10 max-w-lg mx-auto px-4 pb-8">
-        <p className="text-center text-xs" style={{ color: "rgba(255,255,255,0.3)" }}>
-          👑 <span style={{ color: "#ffd700" }}>Văn Minh Tool</span> — Uy tín • Chất lượng
+        <p className="text-center text-xs" style={{ color: "rgba(255,255,255,0.2)" }}>
+          👑 <span style={{
+            background: "linear-gradient(135deg, #ffd700, #ffae42)",
+            WebkitBackgroundClip: "text",
+            WebkitTextFillColor: "transparent",
+          }}>Văn Minh Tool</span> — Uy tín • Chất lượng
         </p>
       </section>
     </div>
+  );
+}
+
+function MenuButton({ icon, label, onClick }: { icon: string; label: string; onClick: () => void }) {
+  return (
+    <button className="flex items-center gap-3 px-4 py-3 rounded-xl font-bold text-sm transition-all hover:scale-[1.02]" style={{
+      background: "rgba(255,215,0,0.06)",
+      border: "1px solid rgba(255,215,0,0.08)",
+      color: "#ffd700"
+    }} onClick={onClick}>
+      <span className="w-8 h-8 rounded-lg flex items-center justify-center text-base" style={{
+        background: "linear-gradient(135deg, rgba(255,215,0,0.2), rgba(255,174,66,0.1))"
+      }}>{icon}</span>
+      {label}
+    </button>
   );
 }

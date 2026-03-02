@@ -30,15 +30,15 @@ export const GAMES: Game[] = [
   { id: "sao789", name: "Sao789", icon: "⭐", image: "/images/games/sao789.png" },
   { id: "son789", name: "Son789", icon: "🎁", image: "/images/games/son789.png" },
   { id: "sumclub", name: "SumClub", icon: "🍀", image: "/images/games/sumclub.jpeg" },
-  { id: "ta28", name: "TA28", icon: "💧" },
-  { id: "tik88", name: "Tik88", icon: "🎲" },
-  { id: "rikvip", name: "RikVIP", icon: "👑" },
+  { id: "ta28", name: "TA28", icon: "💧", image: "/images/games/ta28.png" },
+  { id: "tik88", name: "Tik88", icon: "🎲", image: "/images/games/tik88.png" },
+  { id: "rikvip", name: "RikVIP", icon: "👑", image: "/images/games/rikvip.png" },
   { id: "betvip", name: "BetVIP", icon: "🎰", image: "/images/games/betvip.jpeg" },
   { id: "b52", name: "B52", icon: "✈️", image: "/images/games/b52.webp" },
   { id: "789club", name: "789Club", icon: "🃏", image: "/images/games/789club.jpeg" },
   { id: "lc79", name: "LC79", icon: "💎", image: "/images/games/lc79.webp" },
   { id: "xocdia88", name: "Xóc Đĩa 88", icon: "🎵" },
-  { id: "thienduong", name: "Thiên Đường Trò Chơi", icon: "🏆" },
+  { id: "thienduong", name: "Thiên Đường Trò Chơi", icon: "🏆", image: "/images/games/thienduong.jpeg" },
 ];
 
 export function analyzeMD5(md5: string) {

@@ -159,14 +159,21 @@ export default function GameDetail() {
           <button onClick={() => navigate("/")} className="flex items-center gap-1 text-sm font-bold transition-all hover:scale-105" style={{ color: "#ffd700" }}>
             <span style={{ filter: "drop-shadow(0 0 4px rgba(255,215,0,0.5))" }}>← Trang chủ</span>
           </button>
-          <h1 className="text-xl font-black tracking-wider" style={{
-            background: "linear-gradient(135deg, #ffd700, #ff8c00, #ffd700)",
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
-            filter: "drop-shadow(0 2px 8px rgba(255,215,0,0.3))"
-          }}>
-            {game.icon} {game.name}
-          </h1>
+          <div className="flex items-center gap-2">
+            {game.image ? (
+              <img src={game.image} alt={game.name} className="w-8 h-8 rounded-lg object-cover" />
+            ) : (
+              <span>{game.icon}</span>
+            )}
+            <span className="text-xl font-black tracking-wider" style={{
+              background: "linear-gradient(135deg, #ffd700, #ff8c00, #ffd700)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              filter: "drop-shadow(0 2px 8px rgba(255,215,0,0.3))"
+            }}>
+              {game.name}
+            </span>
+          </div>
           <div className="w-16" />
         </div>
       </header>
