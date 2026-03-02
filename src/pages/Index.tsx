@@ -167,11 +167,15 @@ export default function Index() {
                 }}
                 onClick={() => navigate(`/game/${game.id}`)}
               >
-                <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl" style={{
-                  background: colors.iconBg,
+                <div className="w-14 h-14 rounded-2xl flex items-center justify-center text-2xl overflow-hidden" style={{
+                  background: game.image ? "transparent" : colors.iconBg,
                   boxShadow: "0 4px 15px rgba(0,0,0,0.3)",
                 }}>
-                  {game.icon}
+                  {game.image ? (
+                    <img src={game.image} alt={game.name} className="w-full h-full object-cover rounded-2xl" />
+                  ) : (
+                    game.icon
+                  )}
                 </div>
                 <div className="text-center">
                   <p className="font-black text-[11px] text-white">{game.name.toUpperCase()}</p>
