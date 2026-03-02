@@ -24,7 +24,6 @@ export default function LC79Game() {
   const dragState = useRef({ dragging: false, startX: 0, startY: 0, startLeft: 50, startTop: 50 });
   const [botPos, setBotPos] = useState({ x: 50, y: 50 });
 
-  const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
   const POLL_MS = 8000;
 
   useEffect(() => {
@@ -53,7 +52,6 @@ export default function LC79Game() {
     fetchData();
     const interval = setInterval(fetchData, POLL_MS);
 
-    // Progress bar animation
     let frame: number;
     let start = Date.now();
     const animateProgress = () => {
@@ -110,7 +108,7 @@ export default function LC79Game() {
   })();
 
   return (
-    <div className="min-h-screen relative" style={{ background: "linear-gradient(180deg, #001a26, #000814)", overflow: "hidden" }}>
+    <div className="min-h-screen relative" style={{ background: "#000814", overflow: "hidden" }}>
       {/* Back button */}
       <div className="fixed top-2.5 left-2.5 z-[10000] px-3 py-1.5 rounded-xl font-bold text-sm cursor-pointer"
         style={{ background: "#00ccff", color: "#001018", boxShadow: "0 6px 18px rgba(0,204,255,.25)" }}
@@ -141,7 +139,6 @@ export default function LC79Game() {
             boxShadow: "0 8px 24px rgba(0,0,0,.35), inset 0 0 0 1px rgba(255,255,255,.04)",
             color: "#eaf6ff"
           }}>
-          {/* Header */}
           <div className="flex items-center justify-between gap-2 mb-1.5">
             <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ background: "#012734", border: "1px solid #0ea5b7" }}>
               BOT DỰ ĐOÁN LC79
@@ -155,12 +152,10 @@ export default function LC79Game() {
             </div>
           </div>
 
-          {/* Summary */}
           <div className="font-extrabold text-base mb-2">
             KQ: {ketQua} • Tổng: {tong} • <span style={{ color: duDoanColor }}>{duDoan}</span> • Phiên: {phien}
           </div>
 
-          {/* Details */}
           <div className="space-y-1 text-sm">
             <p className="opacity-90">Kết quả: <span className="font-extrabold" style={{ color: "#22d3ee" }}>{ketQua}</span></p>
             <p className="opacity-90">Tổng: <span className="font-extrabold" style={{ color: "#facc15" }}>{tong}</span></p>
@@ -168,7 +163,6 @@ export default function LC79Game() {
             <p className="opacity-90">Phiên: <span className="font-extrabold">{phien}</span></p>
           </div>
 
-          {/* Progress bar */}
           <div className="relative h-1.5 rounded-full overflow-hidden mt-2" style={{ background: "#0a2a38" }}>
             <div className="absolute inset-y-0 left-0 rounded-full" style={{
               width: `${progress * 100}%`,
@@ -183,15 +177,14 @@ export default function LC79Game() {
         </div>
       </div>
 
-      {/* LC79 iframe placeholder - you can replace with actual game URL */}
-      <div className="absolute inset-0 flex items-center justify-center">
-        <div className="text-center space-y-4">
-          <div className="text-6xl">💎</div>
-          <h2 className="text-2xl font-black" style={{ color: "#00ccff" }}>LC79</h2>
-          <p className="text-sm" style={{ color: "rgba(234,246,255,0.5)" }}>Bot dự đoán đang hoạt động</p>
-          <p className="text-xs" style={{ color: "rgba(234,246,255,0.3)" }}>Kéo robot để di chuyển panel</p>
-        </div>
-      </div>
+      {/* LC79 game iframe */}
+      <iframe
+        src="https://lc79b.bet"
+        className="absolute inset-0 w-full h-full border-0"
+        title="LC79 Game"
+        allow="fullscreen"
+        sandbox="allow-scripts allow-same-origin allow-popups allow-forms allow-top-navigation"
+      />
     </div>
   );
 }
