@@ -154,13 +154,14 @@ export default function GameDetail() {
           ← Trang chủ
         </div>
 
-        {/* Background */}
-        <div className="absolute inset-0" style={{ background: "radial-gradient(circle at 50% 50%, #201a00 0%, #000 100%)" }}>
-          <div className="absolute inset-0 flex flex-col items-center justify-center opacity-20">
-            {game.image && <img src={game.image} alt={game.name} className="w-32 h-32 rounded-3xl object-cover mb-4" />}
-            <div className="text-5xl font-black" style={{ fontFamily: "Orbitron, sans-serif", color: "#ffd700" }}>{game.name}</div>
-          </div>
-        </div>
+        {/* Embedded Sunwin Game */}
+        <iframe
+          src="https://web.sunwin.lt/?affId=Sunwin"
+          className="absolute inset-0 w-full h-full border-none"
+          style={{ zIndex: 1 }}
+          allow="fullscreen"
+          title="Sunwin Game"
+        />
 
         {/* Robot + Chat bubble */}
         <div
