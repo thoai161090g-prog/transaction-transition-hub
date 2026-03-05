@@ -11,9 +11,10 @@ serve(async (req) => {
   }
 
   try {
-    const res = await fetch("https://lc79dudoan-1.onrender.com/md5", {
-      headers: { "Accept": "application/json" },
-    });
+    const res = await fetch(
+      "https://wtxmd52.tele68.com/v1/txmd5/lite-sessions?cp=R&cl=R&pf=web&at=3959701241b686f12e01bfe9c3a319b8",
+      { headers: { "Accept": "application/json" } }
+    );
 
     if (!res.ok) {
       throw new Error(`API returned ${res.status}`);
