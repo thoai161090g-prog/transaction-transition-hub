@@ -12,6 +12,7 @@ import Admin from "./pages/Admin";
 import History from "./pages/History";
 import GameDetail from "./pages/GameDetail";
 import BackgroundMusic from "./components/BackgroundMusic";
+import SecurityShield from "./components/SecurityShield";
 import ResetPassword from "./pages/ResetPassword";
 import LC79Game from "./pages/LC79Game";
 import BetVipGame from "./pages/BetVipGame";
@@ -34,6 +35,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
+          <SecurityShield />
           <BackgroundMusic />
           <Routes>
             <Route path="/auth" element={<Auth />} />
