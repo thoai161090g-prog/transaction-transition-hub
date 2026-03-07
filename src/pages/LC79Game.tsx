@@ -48,7 +48,11 @@ export default function LC79Game() {
       if (latest && latest.id !== lastSessionRef.current && user) {
         lastSessionRef.current = latest.id;
         const isTai = latest.resultTruyenThong === "TAI";
-        const percent = Math.floor(Math.random() * (98 - 82 + 1)) + 82;
+        // Deterministic confidence from session data
+        const recentList = (result as LC79ApiResponse)?.list?.slice(0, 10) ?? [];
+        const tC = recentList.filter(s => s.resultTruyenThong === "TAI").length;
+        const ratio = Math.abs(tC - (recentList.length - tC)) / Math.max(recentList.length, 1);
+        const percent = Math.min(98, Math.max(82, 78 + Math.round(ratio * 18) + 4));
         await supabase.from("analysis_history").insert({
           user_id: user.id,
           game: "LC79",
@@ -118,17 +122,45 @@ export default function LC79Game() {
   const history = apiData?.list?.slice(0, 10) ?? [];
   const stat = apiData?.typeStat;
 
-  // Predict next based on pattern
+  // Deterministic prediction based on session data patterns
   const predictNext = () => {
     if (!apiData?.list || apiData.list.length < 3) return { result: "…", percent: 0 };
-    const recent = apiData.list.slice(0, 5);
+    const recent = apiData.list.slice(0, 10);
     const taiCount = recent.filter(s => s.resultTruyenThong === "TAI").length;
     const xiuCount = recent.length - taiCount;
-    const percent = Math.floor(Math.random() * (98 - 82 + 1)) + 82;
-    // If more XIU recently, predict TAI (reversal pattern)
-    if (xiuCount > taiCount) return { result: "TÀI", percent };
-    if (taiCount > xiuCount) return { result: "XỈU", percent };
-    return { result: recent[0].resultTruyenThong === "TAI" ? "XỈU" : "TÀI", percent };
+    
+    // Deterministic confidence based on streak and ratio
+    const lastResult = recent[0].resultTruyenThong;
+    let streak = 1;
+    for (let i = 1; i < recent.length; i++) {
+      if (recent[i].resultTruyenThong === lastResult) streak++;
+      else break;
+    }
+    
+    // Ratio-based confidence: stronger imbalance = higher confidence
+    const ratio = Math.abs(taiCount - xiuCount) / recent.length;
+    const streakBonus = Math.min(streak * 3, 12);
+    const baseConfidence = 78 + Math.round(ratio * 18) + streakBonus;
+    const percent = Math.min(98, Math.max(82, baseConfidence));
+    
+    // Point pattern analysis for prediction
+    const avgPoint = recent.reduce((s, r) => s + r.point, 0) / recent.length;
+    const pointTrend = recent[0].point - avgPoint;
+    
+    // Multi-factor prediction
+    let predictTai = false;
+    if (streak >= 3) {
+      // Reversal after long streak
+      predictTai = lastResult !== "TAI";
+    } else if (Math.abs(taiCount - xiuCount) >= 3) {
+      // Balance correction
+      predictTai = xiuCount > taiCount;
+    } else {
+      // Point trend analysis
+      predictTai = pointTrend < 0; // trending low = expect high
+    }
+    
+    return { result: predictTai ? "TÀI" : "XỈU", percent };
   };
 
   const prediction = predictNext();
