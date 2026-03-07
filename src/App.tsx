@@ -15,6 +15,7 @@ import BackgroundMusic from "./components/BackgroundMusic";
 import ResetPassword from "./pages/ResetPassword";
 import LC79Game from "./pages/LC79Game";
 import BetVipGame from "./pages/BetVipGame";
+import BCRGame from "./pages/BCRGame";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
