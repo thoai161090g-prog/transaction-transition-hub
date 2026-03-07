@@ -37,6 +37,7 @@ export const GAMES: Game[] = [
   { id: "b52", name: "B52", icon: "✈️", image: "/images/games/b52.webp" },
   { id: "789club", name: "789Club", icon: "🃏", image: "/images/games/789club.jpeg" },
   { id: "lc79", name: "LC79", icon: "💎", image: "/images/games/lc79.webp" },
+  { id: "bcr", name: "Sexy BCR", icon: "♠️", image: "/images/games/bcr.png" },
   { id: "xocdia88", name: "Xóc Đĩa 88", icon: "🎵" },
   { id: "thienduong", name: "Thiên Đường Trò Chơi", icon: "🏆", image: "/images/games/thienduong.jpeg" },
 ];
