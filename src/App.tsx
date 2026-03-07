@@ -35,6 +35,7 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <AuthProvider>
+          <SecurityShield />
           <BackgroundMusic />
           <Routes>
             <Route path="/auth" element={<Auth />} />
