@@ -53,6 +53,9 @@ export default function LC79Game() {
   // Pattern analysis - NO random
   const analyzePattern = (hist: string[]): { prediction: string; confidence: number; warning?: string } => {
     const len = hist.length;
+    if (len < 1) {
+      return { prediction: "TÀI", confidence: 50 };
+    }
     if (len < 2) {
       const last = hist[len - 1];
       return { prediction: last === "T" ? "XỈU" : "TÀI", confidence: 75 };
