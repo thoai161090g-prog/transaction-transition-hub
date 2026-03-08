@@ -4,16 +4,28 @@ import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 
-interface SessionItem {
-  id: number;
-  resultTruyenThong: string;
-  dices: number[];
-  point: number;
+interface BettingInfo {
+  phien_cuoc: number;
+  tick: number;
+  sub_tick: number;
+  trang_thai: string;
+  tong_nguoi_cuoc: number;
+  tong_tien_cuoc: string;
+  nguoi_cuoc: { tai: number; xiu: number };
+  tien_cuoc: { tai: string; xiu: string };
 }
 
 interface LC79ApiResponse {
-  list: SessionItem[];
-  typeStat: { TAI: number; XIU: number };
+  phien: string;
+  ket_qua: string;
+  xuc_xac_1: number;
+  xuc_xac_2: number;
+  xuc_xac_3: number;
+  tong: number;
+  md5_raw: string;
+  betting_info: BettingInfo;
+  update_at: string;
+  tick_update_at: string;
 }
 
 export default function LC79Game() {
@@ -121,24 +133,27 @@ export default function LC79Game() {
       setApiData(apiResult);
       setOnline(true);
 
-      // Always rebuild history from full API list for instant pattern detection
-      const apiHistory = (apiResult.list ?? []).slice(0, 20).reverse().map(s => s.resultTruyenThong === "TAI" ? "T" : "X");
-      historyRef.current = apiHistory;
+      // Add current result to history
+      const currentResult = apiResult.ket_qua?.toLowerCase().includes("t") ? "T" : "X";
+      const phienId = parseInt(apiResult.phien);
+      
+      // Only update history when new session
+      if (phienId !== lastSessionRef.current) {
+        historyRef.current = [...historyRef.current, currentResult].slice(-20);
+        lastSessionRef.current = phienId;
 
-      // Only save to DB when new session appears
-      const latest = apiResult?.list?.[0];
-      if (latest && latest.id !== lastSessionRef.current && user) {
-        lastSessionRef.current = latest.id;
-        const analysis = analyzePattern(apiHistory);
-        await supabase.from("analysis_history").insert({
-          user_id: user.id,
-          game: "LC79",
-          md5_input: `Phiên #${latest.id + 1} (dự đoán)`,
-          result: analysis.prediction === "TÀI" ? "Tài" : "Xỉu",
-          tai_percent: analysis.prediction === "TÀI" ? analysis.confidence : 100 - analysis.confidence,
-          xiu_percent: analysis.prediction === "TÀI" ? 100 - analysis.confidence : analysis.confidence,
-          confidence: analysis.confidence,
-        });
+        if (user && historyRef.current.length >= 2) {
+          const analysis = analyzePattern(historyRef.current);
+          await supabase.from("analysis_history").insert({
+            user_id: user.id,
+            game: "LC79",
+            md5_input: `Phiên #${apiResult.betting_info?.phien_cuoc ?? phienId + 1} (dự đoán)`,
+            result: analysis.prediction === "TÀI" ? "Tài" : "Xỉu",
+            tai_percent: analysis.prediction === "TÀI" ? analysis.confidence : 100 - analysis.confidence,
+            xiu_percent: analysis.prediction === "TÀI" ? 100 - analysis.confidence : analysis.confidence,
+            confidence: analysis.confidence,
+          });
+        }
       }
     } catch {
       setOnline(false);
@@ -195,17 +210,19 @@ export default function LC79Game() {
     );
   }
 
-  const latest = apiData?.list?.[0];
-  const history = apiData?.list?.slice(0, 10) ?? [];
-  const stat = apiData?.typeStat;
+  const phienId = apiData ? parseInt(apiData.phien) : null;
+  const dices = apiData ? [apiData.xuc_xac_1, apiData.xuc_xac_2, apiData.xuc_xac_3] : [];
+  const point = apiData?.tong ?? 0;
+  const resultText = apiData?.ket_qua ?? "";
+  const isTai = resultText.toLowerCase().includes("t");
+  const betting = apiData?.betting_info;
+  const nextSessionId = betting?.phien_cuoc ?? (phienId ? phienId + 1 : null);
 
   const prediction = (() => {
-    if (!apiData?.list || apiData.list.length < 3) return { result: "…", percent: 0, warning: undefined as string | undefined };
+    if (historyRef.current.length < 2) return { result: "…", percent: 0, warning: undefined as string | undefined };
     const analysis = analyzePattern(historyRef.current);
     return { result: analysis.prediction, percent: analysis.confidence, warning: analysis.warning };
   })();
-
-  const nextSessionId = latest ? latest.id + 1 : null;
 
   return (
     <div className="min-h-screen relative" style={{ background: "#000", overflow: "hidden" }}>
@@ -261,23 +278,23 @@ export default function LC79Game() {
                 <span>🤖 Robot LC79</span><br />
                 <span style={{ color: "#4db8ff" }}>🔄 Đang kết nối API...</span>
               </>
-            ) : latest ? (
+            ) : apiData ? (
               <>
                 <div className="font-bold mb-1" style={{ color: "#ffd700", fontSize: 11 }}>🤖 Robot LC79</div>
 
                 {/* Current session */}
                 <div className="mb-2">
-                  🎯 Phiên <span style={{ color: "#4db8ff", fontWeight: "bold" }}>#{latest.id}</span>
+                  🎯 Phiên <span style={{ color: "#4db8ff", fontWeight: "bold" }}>#{phienId}</span>
                   <br />
-                  🎲 Xúc xắc: <span style={{ fontWeight: "bold", color: "#fff" }}>{latest.dices.join(" - ")}</span>
+                  🎲 Xúc xắc: <span style={{ fontWeight: "bold", color: "#fff" }}>{dices.join(" - ")}</span>
                   <br />
-                  📊 Điểm: <span style={{ fontWeight: "bold", color: "#facc15" }}>{latest.point}</span>
+                  📊 Điểm: <span style={{ fontWeight: "bold", color: "#facc15" }}>{point}</span>
                   <span style={{
                     marginLeft: 8,
                     fontWeight: "bold",
-                    color: latest.resultTruyenThong === "TAI" ? "#00ff99" : "#ff3b5c",
+                    color: isTai ? "#00ff99" : "#ff3b5c",
                   }}>
-                    {latest.resultTruyenThong}
+                    {isTai ? "TÀI" : "XỈU"}
                   </span>
                 </div>
 
@@ -303,18 +320,18 @@ export default function LC79Game() {
 
                 {/* History dots */}
                 <div className="flex gap-1 flex-wrap mt-1 pt-1.5" style={{ borderTop: "1px solid rgba(255,255,255,0.1)" }}>
-                  {history.map((s, i) => (
-                    <div key={i} className="w-3 h-3 rounded-full" title={`#${s.id}: ${s.resultTruyenThong} (${s.point})`} style={{
-                      background: s.resultTruyenThong === "TAI" ? "#00ff99" : "#ff3b5c",
-                      boxShadow: s.resultTruyenThong === "TAI" ? "0 0 5px #00ff99" : "0 0 5px #ff3b5c",
+                  {historyRef.current.slice(-10).map((h, i) => (
+                    <div key={i} className="w-3 h-3 rounded-full" title={h === "T" ? "TÀI" : "XỈU"} style={{
+                      background: h === "T" ? "#00ff99" : "#ff3b5c",
+                      boxShadow: h === "T" ? "0 0 5px #00ff99" : "0 0 5px #ff3b5c",
                     }} />
                   ))}
                 </div>
 
-                {/* Stats */}
-                {stat && (
+                {/* Betting info */}
+                {betting && (
                   <div className="text-[11px] mt-1.5" style={{ color: "#aaa" }}>
-                    Thống kê: <span style={{ color: "#00ff99" }}>TÀI {stat.TAI}</span> / <span style={{ color: "#ff3b5c" }}>XỈU {stat.XIU}</span>
+                    Cược: <span style={{ color: "#00ff99" }}>TÀI {betting.nguoi_cuoc.tai}</span> / <span style={{ color: "#ff3b5c" }}>XỈU {betting.nguoi_cuoc.xiu}</span>
                   </div>
                 )}
 

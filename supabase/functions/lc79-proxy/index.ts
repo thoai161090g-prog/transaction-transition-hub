@@ -12,7 +12,7 @@ serve(async (req) => {
 
   try {
     const res = await fetch(
-      "https://wtxmd52.tele68.com/v1/txmd5/lite-sessions?cp=R&cl=R&pf=web&at=3959701241b686f12e01bfe9c3a319b8",
+      "https://aims-discussions-nottingham-milton.trycloudflare.com/api/txmd5",
       { headers: { "Accept": "application/json" } }
     );
 
