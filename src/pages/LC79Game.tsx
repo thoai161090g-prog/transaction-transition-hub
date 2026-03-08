@@ -161,7 +161,7 @@ export default function LC79Game() {
     } catch {
       setOnline(false);
     }
-  }, [user]);
+  }, [user, history]);
 
   useEffect(() => {
     if (hasKey === false) {
