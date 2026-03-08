@@ -97,8 +97,8 @@ export default function GameDetail() {
   const onPointerMove = (e: React.PointerEvent) => {
     if (!dragState.current.dragging) return;
     setPopupPos({
-      x: Math.max(0, Math.min(window.innerWidth - 320, dragState.current.startLeft + (e.clientX - dragState.current.startX))),
-      y: Math.max(0, Math.min(window.innerHeight - 200, dragState.current.startTop + (e.clientY - dragState.current.startY))),
+      x: Math.max(0, Math.min(window.innerWidth - 230, dragState.current.startLeft + (e.clientX - dragState.current.startX))),
+      y: Math.max(0, Math.min(window.innerHeight - 190, dragState.current.startTop + (e.clientY - dragState.current.startY))),
     });
   };
   const onPointerUp = (e: React.PointerEvent) => {
@@ -166,13 +166,13 @@ export default function GameDetail() {
         {/* Robot + Chat bubble */}
         <div
           className="fixed z-[9999] flex items-center select-none"
-          style={{ left: popupPos.x, top: popupPos.y, touchAction: "none" }}
+          style={{ left: popupPos.x, top: popupPos.y, touchAction: "none", maxWidth: "calc(100vw - 8px)" }}
         >
           {/* Robot GIF */}
           <img
             src="/images/robot.gif"
             alt="Robot"
-            className="w-[75px] h-[75px] cursor-move"
+            className="w-[42px] h-[42px] cursor-move"
             onPointerDown={onPointerDown}
             onPointerMove={onPointerMove}
             onPointerUp={onPointerUp}
@@ -180,16 +180,16 @@ export default function GameDetail() {
 
           {/* Chat bubble */}
           {popupVisible && (
-            <div className="ml-2.5" style={{
+            <div className="ml-1" style={{
               background: "rgba(0,0,0,0.85)",
               color: "#fff",
-              padding: 15,
-              borderRadius: 16,
-              width: 230,
+              padding: 8,
+              borderRadius: 10,
+              width: "min(170px, calc(100vw - 78px))",
               backdropFilter: "blur(10px)",
               border: "1px solid rgba(255,255,255,0.2)",
               boxShadow: "0 0 20px rgba(0,0,0,0.6)",
-              fontSize: 14,
+              fontSize: 10,
             }}>
               {sunwinLoading ? (
                 <>
@@ -209,12 +209,12 @@ export default function GameDetail() {
                   <span style={{
                     color: sunwinData.result === "TÀI" ? "#00ff99" : "#ff3b5c",
                     fontWeight: "bold",
-                    fontSize: 18,
+                    fontSize: 14,
                   }}>
                     {sunwinData.result}
                   </span><br /><br />
-                  📊 Tỷ lệ: <span style={{ color: "#ffd966", fontWeight: "bold", fontSize: 18 }}>{sunwinData.percent}%</span>
-                  <div style={{ fontSize: 12, color: "#aaa", marginTop: 6 }}>🟢 Đã đồng bộ game</div>
+                  📊 Tỷ lệ: <span style={{ color: "#ffd966", fontWeight: "bold", fontSize: 13 }}>{sunwinData.percent}%</span>
+                  <div style={{ fontSize: 10, color: "#aaa", marginTop: 6 }}>🟢 Đã đồng bộ game</div>
                 </>
               ) : null}
 
