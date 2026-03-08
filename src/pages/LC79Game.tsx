@@ -145,7 +145,7 @@ export default function LC79Game() {
         historyRef.current = [...historyRef.current, currentResult].slice(-20);
         lastSessionRef.current = phienId;
 
-        if (user && historyRef.current.length >= 2) {
+        if (user && historyRef.current.length >= 1) {
           const analysis = analyzePattern(historyRef.current);
           await supabase.from("analysis_history").insert({
             user_id: user.id,
