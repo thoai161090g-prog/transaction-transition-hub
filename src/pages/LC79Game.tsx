@@ -30,7 +30,7 @@ export default function LC79Game() {
   const [botPos, setBotPos] = useState({ x: 20, y: 80 });
   const lastSessionRef = useRef<number | null>(null);
 
-  const POLL_MS = 5000;
+  const POLL_MS = 3000;
 
   useEffect(() => {
     hasActiveKey().then(setHasKey);
@@ -121,27 +121,24 @@ export default function LC79Game() {
       setApiData(apiResult);
       setOnline(true);
 
-      const latest = apiResult?.list?.[0];
-      if (latest && latest.id !== lastSessionRef.current) {
-        lastSessionRef.current = latest.id;
-        
-        // Build history from API data
-        const apiHistory = (apiResult.list ?? []).slice(0, 20).reverse().map(s => s.resultTruyenThong === "TAI" ? "T" : "X");
-        historyRef.current = apiHistory;
+      // Always rebuild history from full API list for instant pattern detection
+      const apiHistory = (apiResult.list ?? []).slice(0, 20).reverse().map(s => s.resultTruyenThong === "TAI" ? "T" : "X");
+      historyRef.current = apiHistory;
 
-        if (user) {
-          const isTai = latest.resultTruyenThong === "TAI";
-          const analysis = analyzePattern(apiHistory);
-          await supabase.from("analysis_history").insert({
-            user_id: user.id,
-            game: "LC79",
-            md5_input: `Phiên #${latest.id + 1} (dự đoán)`,
-            result: analysis.prediction === "TÀI" ? "Tài" : "Xỉu",
-            tai_percent: analysis.prediction === "TÀI" ? analysis.confidence : 100 - analysis.confidence,
-            xiu_percent: analysis.prediction === "TÀI" ? 100 - analysis.confidence : analysis.confidence,
-            confidence: analysis.confidence,
-          });
-        }
+      // Only save to DB when new session appears
+      const latest = apiResult?.list?.[0];
+      if (latest && latest.id !== lastSessionRef.current && user) {
+        lastSessionRef.current = latest.id;
+        const analysis = analyzePattern(apiHistory);
+        await supabase.from("analysis_history").insert({
+          user_id: user.id,
+          game: "LC79",
+          md5_input: `Phiên #${latest.id + 1} (dự đoán)`,
+          result: analysis.prediction === "TÀI" ? "Tài" : "Xỉu",
+          tai_percent: analysis.prediction === "TÀI" ? analysis.confidence : 100 - analysis.confidence,
+          xiu_percent: analysis.prediction === "TÀI" ? 100 - analysis.confidence : analysis.confidence,
+          confidence: analysis.confidence,
+        });
       }
     } catch {
       setOnline(false);
