@@ -40,3 +40,44 @@
 .read-the-docs {
   color: #888;
 }
+
+/* Rainbow blink text for VĂN MINH VIP */
+@keyframes rainbowBlink {
+  0% { color: #ff0000; text-shadow: 0 0 10px #ff0000; }
+  14% { color: #ff8800; text-shadow: 0 0 10px #ff8800; }
+  28% { color: #ffdd00; text-shadow: 0 0 10px #ffdd00; }
+  42% { color: #00ff44; text-shadow: 0 0 10px #00ff44; }
+  57% { color: #00ccff; text-shadow: 0 0 10px #00ccff; }
+  71% { color: #8800ff; text-shadow: 0 0 10px #8800ff; }
+  85% { color: #ff00ff; text-shadow: 0 0 10px #ff00ff; }
+  100% { color: #ff0000; text-shadow: 0 0 10px #ff0000; }
+}
+
+@keyframes rainbowIconBlink {
+  0% { filter: drop-shadow(0 0 6px #ff0000); }
+  14% { filter: drop-shadow(0 0 6px #ff8800); }
+  28% { filter: drop-shadow(0 0 6px #ffdd00); }
+  42% { filter: drop-shadow(0 0 6px #00ff44); }
+  57% { filter: drop-shadow(0 0 6px #00ccff); }
+  71% { filter: drop-shadow(0 0 6px #8800ff); }
+  85% { filter: drop-shadow(0 0 6px #ff00ff); }
+  100% { filter: drop-shadow(0 0 6px #ff0000); }
+}
+
+@keyframes iconPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.25); }
+}
+
+.rainbow-blink-text {
+  animation: rainbowBlink 2s linear infinite;
+  font-weight: 900;
+  letter-spacing: 2px;
+  -webkit-text-fill-color: unset !important;
+  background: none !important;
+}
+
+.rainbow-blink-icon {
+  animation: rainbowIconBlink 2s linear infinite, iconPulse 1s ease-in-out infinite;
+  display: inline-block;
+}

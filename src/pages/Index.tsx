@@ -72,7 +72,7 @@ export default function Index() {
             WebkitTextFillColor: "transparent",
             filter: "drop-shadow(0 2px 8px rgba(255,215,0,0.4))"
           }}>
-            👑 <span>Văn Minh</span>
+            <span className="rainbow-blink-icon">⭐</span> <span className="rainbow-blink-text">VĂN MINH VIP</span> <span className="rainbow-blink-icon">👑</span>
           </h1>
           <div className="flex items-center gap-3">
             <span className="text-[10px] px-2.5 py-1 rounded-full font-bold backdrop-blur-md" style={{
