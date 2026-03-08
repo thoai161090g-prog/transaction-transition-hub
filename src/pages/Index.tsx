@@ -46,7 +46,8 @@ export default function Index() {
 
   return (
     <div className="min-h-screen relative overflow-hidden" style={{
-      background: "linear-gradient(180deg, #05080f 0%, #0a1628 40%, #101d35 70%, #05080f 100%)"
+      background: "linear-gradient(180deg, #05080f 0%, #0a1628 40%, #101d35 70%, #05080f 100%)",
+      maxWidth: "100vw",
     }}>
       <Fireworks />
 
@@ -63,9 +64,9 @@ export default function Index() {
       </div>
 
       {/* Header */}
-      <header className="relative z-10 py-4 px-4">
+      <header className="relative z-10 py-2.5 px-3">
         <div className="max-w-lg mx-auto flex items-center justify-between">
-          <h1 className="text-xl font-black tracking-wider flex items-center gap-2" style={{
+          <h1 className="text-base font-black tracking-wider flex items-center gap-1.5" style={{
             background: "linear-gradient(135deg, #ffd700, #ffae42, #ffd700)",
             WebkitBackgroundClip: "text",
             WebkitTextFillColor: "transparent",
@@ -74,7 +75,7 @@ export default function Index() {
             👑 <span>Văn Minh</span>
           </h1>
           <div className="flex items-center gap-3">
-            <span className="text-xs px-3 py-1.5 rounded-full font-bold backdrop-blur-md" style={{
+            <span className="text-[10px] px-2.5 py-1 rounded-full font-bold backdrop-blur-md" style={{
               background: "linear-gradient(135deg, rgba(255,215,0,0.15), rgba(255,174,66,0.08))",
               color: "#ffd700",
               border: "1px solid rgba(255,215,0,0.25)",
@@ -82,7 +83,7 @@ export default function Index() {
             }}>💰 {formatVND(balance)}</span>
             <Sheet>
               <SheetTrigger asChild>
-                <button className="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm transition-all hover:scale-105" style={{
+                <button className="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs transition-all hover:scale-105" style={{
                   background: "linear-gradient(135deg, #ffd700, #f97316)",
                   color: "#1a0a00",
                   boxShadow: "0 4px 15px rgba(255,215,0,0.3)"
@@ -192,26 +193,26 @@ export default function Index() {
       </header>
 
       {/* Balance card */}
-      <section className="relative z-10 max-w-lg mx-auto px-4 pb-5">
-        <div className="rounded-2xl p-5 relative overflow-hidden" style={{
+      <section className="relative z-10 max-w-lg mx-auto px-3 pb-3">
+        <div className="rounded-xl p-3.5 relative overflow-hidden" style={{
           background: "linear-gradient(135deg, rgba(15,25,50,0.9), rgba(20,30,55,0.9))",
           border: "1px solid rgba(255,215,0,0.12)",
           boxShadow: "0 8px 32px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,215,0,0.08)"
         }}>
-          <div className="absolute top-0 right-0 w-32 h-32 rounded-full opacity-10" style={{
+          <div className="absolute top-0 right-0 w-24 h-24 rounded-full opacity-10" style={{
             background: "radial-gradient(circle, #ffd700, transparent)",
-            filter: "blur(30px)",
+            filter: "blur(20px)",
             transform: "translate(30%, -30%)"
           }} />
           <div className="relative">
-            <p className="text-xs font-medium tracking-wider" style={{ color: "rgba(255,215,0,0.5)" }}>SỐ DƯ HIỆN TẠI</p>
-            <p className="text-3xl font-black mt-1" style={{
+            <p className="text-[10px] font-medium tracking-wider" style={{ color: "rgba(255,215,0,0.5)" }}>SỐ DƯ HIỆN TẠI</p>
+            <p className="text-2xl font-black mt-0.5" style={{
               background: "linear-gradient(135deg, #ffd700, #ffae42, #ffd700)",
               WebkitBackgroundClip: "text",
               WebkitTextFillColor: "transparent",
               filter: "drop-shadow(0 2px 4px rgba(255,215,0,0.3))"
             }}>{formatVND(balance)}</p>
-            <p className="text-[11px] mt-2 px-3 py-1 rounded-full inline-block font-medium" style={{
+            <p className="text-[9px] mt-1 px-2 py-0.5 rounded-full inline-block font-medium" style={{
               background: "rgba(255,215,0,0.08)",
               color: "rgba(255,215,0,0.5)",
               border: "1px solid rgba(255,215,0,0.1)"
@@ -221,39 +222,39 @@ export default function Index() {
       </section>
 
       {/* Games grid */}
-      <section className="relative z-10 max-w-lg mx-auto px-4 py-2">
-        <p className="text-sm font-bold mb-4 flex items-center gap-2" style={{
+      <section className="relative z-10 max-w-lg mx-auto px-3 py-1">
+        <p className="text-xs font-bold mb-2.5 flex items-center gap-1.5" style={{
           background: "linear-gradient(135deg, #ffd700, #ffae42)",
           WebkitBackgroundClip: "text",
           WebkitTextFillColor: "transparent",
         }}>🔥 Danh sách trò chơi</p>
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-4 gap-2">
           {GAMES.map((game) => {
             const subtitle = GAME_SUBTITLES[game.id] || "";
             return (
               <div
                 key={game.id}
-                className="rounded-xl p-2 cursor-pointer transition-all hover:scale-[1.04] active:scale-[0.96] flex flex-col items-center gap-1.5 group"
+                className="rounded-lg p-1.5 cursor-pointer transition-all hover:scale-[1.04] active:scale-[0.96] flex flex-col items-center gap-1 group"
                 style={{
                   background: "linear-gradient(135deg, rgba(15,25,50,0.8), rgba(20,30,55,0.6))",
                   border: "1px solid rgba(255,215,0,0.08)",
-                  boxShadow: "0 4px 20px rgba(0,0,0,0.2)"
+                  boxShadow: "0 2px 10px rgba(0,0,0,0.2)"
                 }}
                 onClick={() => navigate(`/game/${game.id}`)}
               >
-                <div className="w-14 h-14 rounded-xl flex items-center justify-center text-xl overflow-hidden transition-all group-hover:shadow-lg" style={{
+                <div className="w-11 h-11 rounded-lg flex items-center justify-center text-base overflow-hidden transition-all group-hover:shadow-lg" style={{
                   background: game.image ? "transparent" : "linear-gradient(135deg, rgba(255,215,0,0.2), rgba(255,174,66,0.1))",
-                  boxShadow: "0 4px 15px rgba(0,0,0,0.3)",
+                  boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
                 }}>
                   {game.image ? (
-                    <img src={game.image} alt={game.name} className="w-full h-full object-cover rounded-xl" />
+                    <img src={game.image} alt={game.name} className="w-full h-full object-cover rounded-lg" />
                   ) : (
                     game.icon
                   )}
                 </div>
                 <div className="text-center">
-                  <p className="font-black text-[10px] text-white/90">{game.name.toUpperCase()}</p>
-                  <p className="text-[9px]" style={{ color: "rgba(255,215,0,0.4)" }}>{subtitle}</p>
+                  <p className="font-black text-[8px] text-white/90 leading-tight">{game.name.toUpperCase()}</p>
+                  <p className="text-[7px]" style={{ color: "rgba(255,215,0,0.4)" }}>{subtitle}</p>
                 </div>
               </div>
             );
@@ -262,14 +263,14 @@ export default function Index() {
       </section>
 
       {/* Action buttons */}
-      <section className="relative z-10 max-w-lg mx-auto px-4 py-5">
-        <div className="flex gap-3">
-          <button onClick={() => navigate("/buy-key")} className="flex-1 py-4 rounded-2xl font-black text-sm tracking-wider transition-all hover:scale-[1.02] active:scale-[0.98]" style={{
+      <section className="relative z-10 max-w-lg mx-auto px-3 py-3">
+        <div className="flex gap-2">
+          <button onClick={() => navigate("/buy-key")} className="flex-1 py-3 rounded-xl font-black text-xs tracking-wider transition-all hover:scale-[1.02] active:scale-[0.98]" style={{
             background: "linear-gradient(135deg, #ffd700, #f97316, #ffd700)",
             color: "#1a0a00",
             boxShadow: "0 4px 25px rgba(255,215,0,0.3), 0 0 60px rgba(255,215,0,0.1)"
           }}>🔑 MUA KEY</button>
-          <button onClick={signOut} className="py-4 px-6 rounded-2xl font-bold text-sm transition-all hover:scale-[1.02]" style={{
+          <button onClick={signOut} className="py-3 px-5 rounded-xl font-bold text-xs transition-all hover:scale-[1.02]" style={{
             background: "rgba(255,255,255,0.03)",
             border: "1px solid rgba(255,255,255,0.08)",
             color: "rgba(255,255,255,0.4)",
@@ -278,8 +279,8 @@ export default function Index() {
       </section>
 
       {/* Footer */}
-      <section className="relative z-10 max-w-lg mx-auto px-4 pb-8">
-        <p className="text-center text-xs" style={{ color: "rgba(255,255,255,0.2)" }}>
+      <section className="relative z-10 max-w-lg mx-auto px-3 pb-6">
+        <p className="text-center text-[10px]" style={{ color: "rgba(255,255,255,0.2)" }}>
           👑 <span style={{
             background: "linear-gradient(135deg, #ffd700, #ffae42)",
             WebkitBackgroundClip: "text",
