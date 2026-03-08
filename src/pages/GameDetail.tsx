@@ -293,7 +293,7 @@ export default function GameDetail() {
                 </>
               ) : sunwinData ? (
                 <>
-                  🎯 Phiên <span style={{ color: "#4db8ff", fontWeight: "bold" }}>{sunwinData.session}</span><br /><br />
+                  🎯 Phiên tiếp: <span style={{ color: "#4db8ff", fontWeight: "bold" }}>{sunwinData.session}</span><br /><br />
                   🤖 Dự đoán:<br />
                   <span style={{
                     color: sunwinData.result === "TÀI" ? "#00ff99" : "#ff3b5c",
@@ -302,8 +302,13 @@ export default function GameDetail() {
                   }}>
                     {sunwinData.result}
                   </span><br /><br />
-                  📊 Tỷ lệ: <span style={{ color: "#ffd966", fontWeight: "bold", fontSize: 13 }}>{sunwinData.percent}%</span>
-                  <div style={{ fontSize: 10, color: "#aaa", marginTop: 6 }}>🟢 Đã đồng bộ game</div>
+                  📊 Độ tin cậy: <span style={{ color: "#ffd966", fontWeight: "bold", fontSize: 13 }}>{sunwinData.percent}%</span>
+                  {sunwinData.warning && (
+                    <div style={{ fontSize: 9, color: sunwinData.warning.includes("Bệt") ? "#ff3b5c" : "#ffd700", marginTop: 4 }}>
+                      {sunwinData.warning}
+                    </div>
+                  )}
+                  <div style={{ fontSize: 9, color: "#aaa", marginTop: 4 }}>📈 Lịch sử: {historyRef.current.slice(-8).join(" ")}</div>
                 </>
               ) : null}
 
