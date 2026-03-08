@@ -92,8 +92,8 @@ export default function BCRGame() {
   const onPointerMove = (e: React.PointerEvent) => {
     if (!dragState.current.dragging) return;
     setBotPos({
-      x: Math.max(0, Math.min(window.innerWidth - 340, dragState.current.startLeft + (e.clientX - dragState.current.startX))),
-      y: Math.max(0, Math.min(window.innerHeight - 200, dragState.current.startTop + (e.clientY - dragState.current.startY))),
+      x: Math.max(0, Math.min(window.innerWidth - 230, dragState.current.startLeft + (e.clientX - dragState.current.startX))),
+      y: Math.max(0, Math.min(window.innerHeight - 190, dragState.current.startTop + (e.clientY - dragState.current.startY))),
     });
   };
   const onPointerUp = (e: React.PointerEvent) => {
@@ -139,13 +139,13 @@ export default function BCRGame() {
       {/* Robot + Chat bubble */}
       <div
         className="fixed z-[9999] flex items-start select-none"
-        style={{ left: botPos.x, top: botPos.y, touchAction: "none" }}
+        style={{ left: botPos.x, top: botPos.y, touchAction: "none", maxWidth: "calc(100vw - 8px)" }}
       >
         {/* Robot GIF */}
         <img
           src="/images/robot_bcr.gif"
           alt="Robot BCR"
-          className="w-[45px] h-[45px] cursor-move rounded-full"
+          className="w-[40px] h-[40px] cursor-move rounded-full"
           style={{ border: "2px solid #ffd700", boxShadow: "0 0 10px rgba(255,215,0,0.5)" }}
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
@@ -154,16 +154,16 @@ export default function BCRGame() {
 
         {/* Chat bubble */}
         {popupVisible && (
-          <div className="ml-1 relative" style={{
+          <div className="ml-0.5 relative" style={{
             background: "linear-gradient(145deg, rgba(10,0,30,0.95), rgba(30,0,60,0.9))",
             color: "#fff",
-            padding: 7,
-            borderRadius: 10,
-            width: 180,
+            padding: 6,
+            borderRadius: 8,
+            width: "min(165px, calc(100vw - 76px))",
             backdropFilter: "blur(10px)",
             border: "1px solid rgba(180,100,255,0.3)",
             boxShadow: "0 0 15px rgba(128,0,255,0.3)",
-            fontSize: 9,
+            fontSize: 8.5,
           }}>
             {!online ? (
               <>
@@ -185,12 +185,12 @@ export default function BCRGame() {
 
                 {/* Table selector dropdown */}
                 {menuOpen && (
-                  <div className="absolute top-10 right-3 z-50 max-h-[200px] overflow-y-auto rounded-lg"
+                  <div className="absolute top-8 right-0 z-50 max-h-[180px] overflow-y-auto rounded-lg"
                     style={{
                       background: "rgba(10,0,30,0.98)",
                       border: "1px solid rgba(180,100,255,0.4)",
                       boxShadow: "0 8px 25px rgba(0,0,0,0.8)",
-                      width: 180,
+                      width: "100%",
                     }}>
                     {tables.map(t => (
                       <div
