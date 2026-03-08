@@ -39,7 +39,7 @@ export default function SecurityShield() {
     document.addEventListener("dragstart", handleDragStart);
 
     // Check devtools periodically
-    const devToolsInterval = setInterval(detectDevTools, 2000);
+    
 
     // Console warning
     console.log(
