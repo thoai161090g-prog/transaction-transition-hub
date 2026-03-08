@@ -57,7 +57,7 @@ export default function SecurityShield() {
       document.removeEventListener("copy", handleCopy);
       document.removeEventListener("cut", handleCopy);
       document.removeEventListener("dragstart", handleDragStart);
-      clearInterval(devToolsInterval);
+      
       document.body.style.userSelect = "";
       document.body.style.webkitUserSelect = "";
     };
