@@ -176,17 +176,20 @@ export default function LC79Game() {
       setApiData(apiResult);
       setOnline(true);
 
-      // Add current result to history
+      // Parse current result
       const currentResult = apiResult.ket_qua?.toLowerCase().includes("t") ? "T" : "X";
       const phienId = parseInt(apiResult.phien);
       
-      // Only update history when new session
+      // Only update when new session detected
       if (phienId !== lastSessionRef.current) {
+        // Analyze pattern BEFORE adding current result — predict for CURRENT session
+        const analysis = analyzePattern(historyRef.current);
+        
+        // Now add result to history for future predictions
         historyRef.current = [...historyRef.current, currentResult].slice(-20);
         lastSessionRef.current = phienId;
 
         if (user && historyRef.current.length >= 1) {
-          const analysis = analyzePattern(historyRef.current);
           await supabase.from("analysis_history").insert({
             user_id: user.id,
             game: "LC79",
