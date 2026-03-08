@@ -23,10 +23,11 @@ export default function GameDetail() {
   const [history, setHistory] = useState<string[]>([]);
 
   // Sunwin robot state
-  const [sunwinData, setSunwinData] = useState<SunwinApiResult | null>(null);
+  const [sunwinData, setSunwinData] = useState<SunwinApiResult & { prediction?: string; confidence?: number; warning?: string } | null>(null);
   const [sunwinLoading, setSunwinLoading] = useState(true);
   const [sunwinError, setSunwinError] = useState(false);
   const lastSessionRef = useRef<string | number | null>(null);
+  const historyRef = useRef<string[]>([]); // "T" or "X" history
 
   // Drag state
   const popupRef = useRef<HTMLDivElement>(null);
