@@ -181,12 +181,12 @@ export default function GameDetail() {
       const isTai = resultVal.toString().toUpperCase().includes("T") || resultVal === "Tài";
       const currentResult = isTai ? "T" : "X";
       
-      // Add to history
-      historyRef.current = [...historyRef.current.slice(-19), currentResult];
-      
-      // Analyze pattern to predict NEXT session
+      // Analyze pattern BEFORE adding current result — predict for CURRENT session
       const analysis = analyzePattern(historyRef.current);
-      const nextSession = typeof session === "number" ? session + 1 : `${session}+1`;
+      const currentSession = typeof session === "number" ? session + 1 : `${session}+1`;
+      
+      // Now add result to history for future predictions
+      historyRef.current = [...historyRef.current.slice(-19), currentResult];
 
       setSunwinData({
         session: nextSession,
