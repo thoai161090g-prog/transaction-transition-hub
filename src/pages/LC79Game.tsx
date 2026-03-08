@@ -219,7 +219,7 @@ export default function LC79Game() {
   const nextSessionId = betting?.phien_cuoc ?? (phienId ? phienId + 1 : null);
 
   const prediction = (() => {
-    if (historyRef.current.length < 2) return { result: "…", percent: 0, warning: undefined as string | undefined };
+    if (historyRef.current.length < 1) return { result: "…", percent: 0, warning: undefined as string | undefined };
     const analysis = analyzePattern(historyRef.current);
     return { result: analysis.prediction, percent: analysis.confidence, warning: analysis.warning };
   })();
