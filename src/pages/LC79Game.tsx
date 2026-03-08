@@ -41,14 +41,13 @@ export default function LC79Game() {
   const dragState = useRef({ dragging: false, startX: 0, startY: 0, startLeft: 20, startTop: 80 });
   const [botPos, setBotPos] = useState({ x: 20, y: 80 });
   const lastSessionRef = useRef<number | null>(null);
+  const [history, setHistory] = useState<string[]>([]);
 
   const POLL_MS = 3000;
 
   useEffect(() => {
     hasActiveKey().then(setHasKey);
   }, []);
-
-  const historyRef = useRef<string[]>([]); // "T" or "X"
 
   // Pattern analysis - NO random
   const analyzePattern = (hist: string[]): { prediction: string; confidence: number; warning?: string } => {
