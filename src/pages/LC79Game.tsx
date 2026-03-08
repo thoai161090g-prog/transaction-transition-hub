@@ -168,9 +168,6 @@ export default function LC79Game() {
         prediction = last === "T" ? "TÀI" : "XỈU";
         confidence = 68;
       }
-        prediction = last === "T" ? "TÀI" : "XỈU";
-        confidence = 70;
-      }
     }
 
     return { prediction, confidence: Math.min(98, confidence), warning };
