@@ -50,6 +50,7 @@ export default function LC79Game() {
   }, []);
 
   // Advanced pattern analysis - predict NEXT session based on full history
+  // Thuật toán: Nhịp 1-1, 2-2, 3-3 | Bệt dài | Bắt cầu bệt đảo
   const analyzePattern = (hist: string[]): { prediction: string; confidence: number; warning?: string } => {
     const len = hist.length;
     if (len < 1) return { prediction: "TÀI", confidence: 50 };
@@ -57,117 +58,116 @@ export default function LC79Game() {
 
     const last = hist[len - 1];
 
-    // --- Streak detection ---
+    // --- Streak hiện tại ---
     let streakCount = 1;
     for (let i = len - 2; i >= 0; i--) {
       if (hist[i] === last) streakCount++;
       else break;
     }
 
-    // --- Rhythm detection (1-1, 2-2, 3-3, 4-4) ---
-    const detectRhythm = (n: number): boolean => {
-      const need = n * 4; // at least 4 groups
-      if (len < need) return false;
-      const tail = hist.slice(-need);
-      for (let g = 0; g < 4; g++) {
-        const base = tail[g * n];
-        for (let j = 1; j < n; j++) {
-          if (tail[g * n + j] !== base) return false;
-        }
-        if (g > 0 && tail[g * n] === tail[(g - 1) * n]) return false;
-      }
-      return true;
-    };
+    // --- Nhịp 1-1: T X T X T X ---
+    const isRhythm1 = len >= 4 && hist.slice(-4).every((v, i, a) => i === 0 || v !== a[i - 1]);
 
-    const rhythm4 = detectRhythm(4);
-    const rhythm3 = !rhythm4 && detectRhythm(3);
-    const rhythm2 = !rhythm4 && !rhythm3 && detectRhythm(2);
-    const rhythm1 = !rhythm4 && !rhythm3 && !rhythm2 && len >= 6 && hist.slice(-6).every((v, i, a) => i === 0 || v !== a[i - 1]);
-
-    // --- Bridge pattern: ABBA / BAAB ---
-    const isBridge = len >= 6 && (() => {
+    // --- Nhịp 2-2: TT XX TT XX ---
+    const isRhythm2 = len >= 6 && (() => {
       const s = hist.slice(-6);
-      return s[0] === s[1] && s[1] !== s[2] && s[2] === s[3] && s[3] !== s[4] && s[4] === s[5];
+      return s[0] === s[1] && s[2] === s[3] && s[4] === s[5] && s[0] !== s[2] && s[2] !== s[4];
     })();
 
-    // --- Frequency analysis (recent 12 sessions) ---
-    const recentWindow = hist.slice(-12);
-    const tCount = recentWindow.filter(h => h === "T").length;
-    const xCount = recentWindow.length - tCount;
-    const tRatio = tCount / recentWindow.length;
+    // --- Nhịp 3-3: TTT XXX TTT ---
+    const isRhythm3 = len >= 9 && (() => {
+      const s = hist.slice(-9);
+      return s[0] === s[1] && s[1] === s[2] && s[3] === s[4] && s[4] === s[5] && s[6] === s[7] && s[7] === s[8] && s[0] !== s[3] && s[3] !== s[6];
+    })();
 
-    // --- Weighted trend (more weight to recent) ---
-    const recent6 = hist.slice(-6);
-    const weightedScore = recent6.reduce((acc, v, i) => {
-      const weight = (i + 1) / 6; // newer = heavier
-      return acc + (v === "T" ? weight : -weight);
-    }, 0);
+    // --- Bệt đảo: phát hiện streak dài rồi bẻ rồi lại bệt ---
+    // VD: TTTT X TTTT hoặc XXXX T XXXX
+    const isBetDao = len >= 6 && (() => {
+      // Tìm pattern: streak >= 3, rồi 1 đảo, rồi streak mới cùng chiều streak trước
+      if (streakCount >= 2 && len >= streakCount + 2) {
+        const beforeFlip = hist[len - streakCount - 1];
+        const beforeFlipValue = hist[len - streakCount - 2];
+        // beforeFlip khác last (đã đảo 1 lần), và trước đó cùng chiều với last
+        if (beforeFlip !== last && beforeFlipValue === last) {
+          return true;
+        }
+      }
+      return false;
+    })();
 
-    // --- Streak history analysis: detect avg streak length ---
-    const streaks: number[] = [];
-    let sCount = 1;
+    // --- Bắt cầu: phân tích các streak gần đây để tìm pattern ---
+    const streaks: { value: string; count: number }[] = [];
+    let sVal = hist[0], sCount = 1;
     for (let i = 1; i < len; i++) {
-      if (hist[i] === hist[i - 1]) sCount++;
-      else { streaks.push(sCount); sCount = 1; }
+      if (hist[i] === sVal) sCount++;
+      else { streaks.push({ value: sVal, count: sCount }); sVal = hist[i]; sCount = 1; }
     }
-    streaks.push(sCount);
-    const avgStreak = streaks.length > 1 ? streaks.reduce((a, b) => a + b, 0) / streaks.length : 1;
+    streaks.push({ value: sVal, count: sCount });
 
     let prediction: string;
     let confidence: number;
     let warning: string | undefined;
 
-    // Priority: Rhythm patterns > Bridge > Streak break > Frequency
-    if (rhythm4) {
-      const groupPos = streakCount % 4;
-      prediction = groupPos < 4 && groupPos > 0 ? (last === "T" ? "TÀI" : "XỈU") : (last === "T" ? "XỈU" : "TÀI");
-      confidence = 94;
-      warning = "🔥 Nhịp 4-4 phát hiện";
-    } else if (rhythm3) {
+    // === ƯU TIÊN: Nhịp cầu > Bệt đảo > Bệt dài > Xu hướng ===
+
+    if (isRhythm3) {
       const groupPos = streakCount % 3;
-      prediction = groupPos > 0 && groupPos < 3 ? (last === "T" ? "TÀI" : "XỈU") : (last === "T" ? "XỈU" : "TÀI");
-      confidence = 93;
+      if (groupPos > 0 && groupPos < 3) {
+        prediction = last === "T" ? "TÀI" : "XỈU"; // tiếp tục nhịp
+        confidence = 93;
+      } else {
+        prediction = last === "T" ? "XỈU" : "TÀI"; // đổi chiều
+        confidence = 91;
+      }
       warning = "🔥 Nhịp 3-3 phát hiện";
-    } else if (rhythm2) {
+    } else if (isRhythm2) {
       const groupPos = streakCount % 2;
-      prediction = groupPos === 1 ? (last === "T" ? "TÀI" : "XỈU") : (last === "T" ? "XỈU" : "TÀI");
-      confidence = 91;
+      if (groupPos === 1) {
+        prediction = last === "T" ? "TÀI" : "XỈU"; // tiếp tục nhịp
+        confidence = 91;
+      } else {
+        prediction = last === "T" ? "XỈU" : "TÀI"; // đổi chiều
+        confidence = 89;
+      }
       warning = "🔥 Nhịp 2-2 phát hiện";
-    } else if (rhythm1) {
-      prediction = last === "T" ? "XỈU" : "TÀI";
+    } else if (isRhythm1) {
+      prediction = last === "T" ? "XỈU" : "TÀI"; // luân phiên
       confidence = 90;
       warning = "🔥 Nhịp 1-1 phát hiện";
-    } else if (isBridge) {
+    } else if (isBetDao) {
+      // Bệt đảo: đang bệt lại sau khi đảo 1 lần → tiếp tục bệt
       prediction = last === "T" ? "TÀI" : "XỈU";
-      confidence = 88;
-      warning = "🌉 Cầu bắc (Bridge) phát hiện";
+      confidence = 85;
+      warning = `🔄 Bệt đảo phát hiện (${streakCount} phiên sau đảo)`;
     } else if (streakCount >= 6) {
-      // Very long streak - high chance to break
       prediction = last === "T" ? "XỈU" : "TÀI";
-      confidence = 62;
-      warning = `⚠️ Bệt dài ${streakCount} phiên! Rất cẩn thận`;
+      confidence = 60;
+      warning = `🚨 Bệt dài ${streakCount} phiên! CẨN THẬN - Có thể bẻ`;
     } else if (streakCount >= 4) {
-      // Streak exceeds average - likely to break
-      const breakLikely = streakCount > avgStreak * 1.3;
+      // So sánh với streak trung bình
+      const avgStreak = streaks.length > 2 ? streaks.reduce((a, b) => a + b.count, 0) / streaks.length : 2;
+      const breakLikely = streakCount >= avgStreak * 1.3;
       prediction = last === "T" ? "XỈU" : "TÀI";
       confidence = breakLikely ? 75 : 65;
-      warning = `⚠️ Chuỗi ${streakCount} phiên${breakLikely ? " - Khả năng bẻ cao" : ""}`;
-    } else if (streakCount >= 3) {
+      warning = `⚠️ Bệt ${streakCount} phiên${breakLikely ? " - Khả năng bẻ CAO" : " - Theo dõi thêm"}`;
+    } else if (streakCount === 3) {
       prediction = last === "T" ? "XỈU" : "TÀI";
       confidence = 72;
       warning = `⚠️ Chuỗi ${streakCount} - Có thể đổi chiều`;
     } else {
-      // Use weighted trend + frequency for prediction
-      if (Math.abs(weightedScore) > 1.5) {
-        // Strong recent trend
-        prediction = weightedScore > 0 ? "TÀI" : "XỈU";
-        confidence = 80 + Math.min(10, Math.floor(Math.abs(weightedScore) * 3));
-      } else if (Math.abs(tRatio - 0.5) > 0.2) {
-        // Imbalanced frequency → expect reversion
-        prediction = tRatio > 0.5 ? "XỈU" : "TÀI";
-        confidence = 76 + Math.floor(Math.abs(tRatio - 0.5) * 20);
+      // Không có pattern rõ → phân tích xu hướng gần đây
+      const recent = hist.slice(-8);
+      const tCount = recent.filter(h => h === "T").length;
+      const xCount = recent.length - tCount;
+      if (Math.abs(tCount - xCount) >= 3) {
+        // Lệch nhiều → kỳ vọng đảo
+        prediction = tCount > xCount ? "XỈU" : "TÀI";
+        confidence = 74;
       } else {
-        // Balanced - follow last result with moderate confidence
+        // Cân bằng → theo chiều cuối
+        prediction = last === "T" ? "TÀI" : "XỈU";
+        confidence = 68;
+      }
         prediction = last === "T" ? "TÀI" : "XỈU";
         confidence = 70;
       }
