@@ -67,43 +67,42 @@ export default function GameDetail() {
     let warning: string | undefined;
 
     if (is33) {
-      // 3-3 rhythm: predict based on completing the pattern
-      const currentGroupSize = streakCount % 3;
-      if (currentGroupSize < 3 && currentGroupSize > 0) {
-        prediction = last === "T" ? "TÀI" : "XỈU"; // continue current group
-        confidence = 92 + Math.floor(Math.random() * 6);
+      const groupPos = streakCount % 3;
+      if (groupPos > 0 && groupPos < 3) {
+        prediction = last === "T" ? "TÀI" : "XỈU";
+        confidence = 93;
       } else {
-        prediction = last === "T" ? "XỈU" : "TÀI"; // switch
-        confidence = 90 + Math.floor(Math.random() * 8);
+        prediction = last === "T" ? "XỈU" : "TÀI";
+        confidence = 91;
       }
       warning = "🔥 Nhịp 3-3 phát hiện";
     } else if (is22) {
-      const currentGroupSize = streakCount % 2;
-      if (currentGroupSize < 2 && currentGroupSize > 0) {
+      const groupPos = streakCount % 2;
+      if (groupPos > 0 && groupPos < 2) {
         prediction = last === "T" ? "TÀI" : "XỈU";
-        confidence = 90 + Math.floor(Math.random() * 7);
+        confidence = 91;
       } else {
         prediction = last === "T" ? "XỈU" : "TÀI";
-        confidence = 88 + Math.floor(Math.random() * 9);
+        confidence = 89;
       }
       warning = "🔥 Nhịp 2-2 phát hiện";
     } else if (isAlternating) {
       prediction = last === "T" ? "XỈU" : "TÀI";
-      confidence = 88 + Math.floor(Math.random() * 10);
+      confidence = 90;
       warning = "🔥 Nhịp 1-1 phát hiện";
     } else if (streakCount >= 5) {
-      // Long streak warning - reduce confidence, predict reversal
       prediction = last === "T" ? "XỈU" : "TÀI";
-      confidence = 55 + Math.floor(Math.random() * 15);
+      confidence = 58;
       warning = `⚠️ Bệt dài ${streakCount} phiên! Cẩn thận`;
     } else if (streakCount >= 3) {
       prediction = last === "T" ? "XỈU" : "TÀI";
-      confidence = 70 + Math.floor(Math.random() * 12);
+      confidence = 72;
       warning = `⚠️ Chuỗi ${streakCount} - Có thể đổi chiều`;
     } else {
-      // Default: follow recent trend with moderate confidence
+      const tCount = history.slice(-10).filter(h => h === "T").length;
+      const balance = Math.abs(tCount - (Math.min(10, len) - tCount));
+      confidence = 78 + balance * 2;
       prediction = last === "T" ? "TÀI" : "XỈU";
-      confidence = 78 + Math.floor(Math.random() * 12);
     }
 
     return { prediction, confidence, warning };
