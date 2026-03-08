@@ -251,11 +251,11 @@ export default function BCRGame() {
                     </div>
 
                     {/* History dots */}
-                    <div className="flex gap-1 flex-wrap mt-1 pt-1.5" style={{ borderTop: "1px solid rgba(255,255,255,0.1)" }}>
+                    <div className="flex gap-0.5 flex-wrap mt-1 pt-1" style={{ borderTop: "1px solid rgba(255,255,255,0.1)" }}>
                       {resultDots.map((c, i) => (
-                        <div key={i} className="w-3 h-3 rounded-full text-[7px] flex items-center justify-center font-bold" style={{
+                        <div key={i} className="w-2.5 h-2.5 rounded-full text-[6px] flex items-center justify-center font-bold" style={{
                           background: c === "B" ? "#ff3b5c" : c === "P" ? "#4d8bff" : "#00ff99",
-                          boxShadow: c === "B" ? "0 0 4px #ff3b5c" : c === "P" ? "0 0 4px #4d8bff" : "0 0 4px #00ff99",
+                          boxShadow: c === "B" ? "0 0 3px #ff3b5c" : c === "P" ? "0 0 3px #4d8bff" : "0 0 3px #00ff99",
                           color: "#fff",
                         }}>
                           {c}
@@ -264,10 +264,10 @@ export default function BCRGame() {
                     </div>
                   </>
                 ) : (
-                  <div style={{ color: "#aaa" }}>Chọn bàn để xem dự đoán</div>
+                  <div style={{ color: "#aaa", fontSize: 10 }}>Chọn bàn để xem dự đoán</div>
                 )}
 
-                <div className="text-[10px] mt-2" style={{ color: "#666" }}>🟢 Đã đồng bộ game</div>
+                <div className="text-[9px] mt-1" style={{ color: "#666" }}>🟢 Đã đồng bộ game</div>
               </>
             )}
 
