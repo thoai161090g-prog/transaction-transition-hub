@@ -233,7 +233,7 @@ export default function Index() {
             return (
               <div
                 key={game.id}
-                className="rounded-2xl p-3 cursor-pointer transition-all hover:scale-[1.04] active:scale-[0.96] flex flex-col items-center gap-2 group"
+                className="rounded-xl p-2 cursor-pointer transition-all hover:scale-[1.04] active:scale-[0.96] flex flex-col items-center gap-1.5 group"
                 style={{
                   background: "linear-gradient(135deg, rgba(15,25,50,0.8), rgba(20,30,55,0.6))",
                   border: "1px solid rgba(255,215,0,0.08)",
