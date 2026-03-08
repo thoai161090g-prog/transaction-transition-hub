@@ -241,19 +241,19 @@ export default function Index() {
                 }}
                 onClick={() => navigate(`/game/${game.id}`)}
               >
-                <div className="w-20 h-20 rounded-2xl flex items-center justify-center text-3xl overflow-hidden transition-all group-hover:shadow-lg" style={{
+                <div className="w-14 h-14 rounded-xl flex items-center justify-center text-xl overflow-hidden transition-all group-hover:shadow-lg" style={{
                   background: game.image ? "transparent" : "linear-gradient(135deg, rgba(255,215,0,0.2), rgba(255,174,66,0.1))",
                   boxShadow: "0 4px 15px rgba(0,0,0,0.3)",
                 }}>
                   {game.image ? (
-                    <img src={game.image} alt={game.name} className="w-full h-full object-cover rounded-2xl" />
+                    <img src={game.image} alt={game.name} className="w-full h-full object-cover rounded-xl" />
                   ) : (
                     game.icon
                   )}
                 </div>
                 <div className="text-center">
-                  <p className="font-black text-xs text-white/90">{game.name.toUpperCase()}</p>
-                  <p className="text-[10px]" style={{ color: "rgba(255,215,0,0.4)" }}>{subtitle}</p>
+                  <p className="font-black text-[10px] text-white/90">{game.name.toUpperCase()}</p>
+                  <p className="text-[9px]" style={{ color: "rgba(255,215,0,0.4)" }}>{subtitle}</p>
                 </div>
               </div>
             );
