@@ -30,7 +30,7 @@ export default function LC79Game() {
   const [botPos, setBotPos] = useState({ x: 20, y: 80 });
   const lastSessionRef = useRef<number | null>(null);
 
-  const POLL_MS = 5000;
+  const POLL_MS = 3000;
 
   useEffect(() => {
     hasActiveKey().then(setHasKey);
