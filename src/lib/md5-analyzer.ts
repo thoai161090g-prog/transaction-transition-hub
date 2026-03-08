@@ -10,7 +10,7 @@ export const KEY_PACKAGES: KeyPackage[] = [
   { id: "3days", label: "3 Ngày", price: 55000, days: 3 },
   { id: "1week", label: "1 Tuần", price: 130000, days: 7 },
   { id: "1month", label: "1 Tháng", price: 220000, days: 30 },
-  { id: "lifetime", label: "Vĩnh Viễn", price: 250000, days: null },
+  { id: "lifetime", label: "Vĩnh Viễn", price: 300000, days: null },
 ];
 
 export const formatVND = (amount: number) =>
