@@ -36,32 +36,112 @@ export default function LC79Game() {
     hasActiveKey().then(setHasKey);
   }, []);
 
+  const historyRef = useRef<string[]>([]); // "T" or "X"
+
+  // Pattern analysis - NO random
+  const analyzePattern = (hist: string[]): { prediction: string; confidence: number; warning?: string } => {
+    const len = hist.length;
+    if (len < 2) {
+      const last = hist[len - 1];
+      return { prediction: last === "T" ? "XỈU" : "TÀI", confidence: 75 };
+    }
+
+    const last = hist[len - 1];
+    let streakCount = 1;
+    for (let i = len - 2; i >= 0; i--) {
+      if (hist[i] === last) streakCount++;
+      else break;
+    }
+
+    // 1-1 alternating: T X T X
+    const isAlternating = len >= 4 && hist.slice(-4).every((v, i, a) => i === 0 || v !== a[i - 1]);
+    // 2-2 rhythm: TT XX TT XX
+    const is22 = len >= 6 && (() => {
+      const s = hist.slice(-6);
+      return s[0] === s[1] && s[2] === s[3] && s[4] === s[5] && s[0] !== s[2] && s[2] !== s[4];
+    })();
+    // 3-3 rhythm: TTT XXX TTT
+    const is33 = len >= 9 && (() => {
+      const s = hist.slice(-9);
+      return s[0] === s[1] && s[1] === s[2] && s[3] === s[4] && s[4] === s[5] && s[6] === s[7] && s[7] === s[8] && s[0] !== s[3] && s[3] !== s[6];
+    })();
+
+    let prediction: string;
+    let confidence: number;
+    let warning: string | undefined;
+
+    if (is33) {
+      const groupPos = streakCount % 3;
+      if (groupPos > 0 && groupPos < 3) {
+        prediction = last === "T" ? "TÀI" : "XỈU";
+        confidence = 93;
+      } else {
+        prediction = last === "T" ? "XỈU" : "TÀI";
+        confidence = 91;
+      }
+      warning = "🔥 Nhịp 3-3 phát hiện";
+    } else if (is22) {
+      const groupPos = streakCount % 2;
+      if (groupPos > 0 && groupPos < 2) {
+        prediction = last === "T" ? "TÀI" : "XỈU";
+        confidence = 91;
+      } else {
+        prediction = last === "T" ? "XỈU" : "TÀI";
+        confidence = 89;
+      }
+      warning = "🔥 Nhịp 2-2 phát hiện";
+    } else if (isAlternating) {
+      prediction = last === "T" ? "XỈU" : "TÀI";
+      confidence = 90;
+      warning = "🔥 Nhịp 1-1 phát hiện";
+    } else if (streakCount >= 5) {
+      prediction = last === "T" ? "XỈU" : "TÀI";
+      confidence = 58;
+      warning = `⚠️ Bệt dài ${streakCount} phiên! Cẩn thận`;
+    } else if (streakCount >= 3) {
+      prediction = last === "T" ? "XỈU" : "TÀI";
+      confidence = 72;
+      warning = `⚠️ Chuỗi ${streakCount} - Có thể đổi chiều`;
+    } else {
+      // Tính confidence dựa trên tỉ lệ T/X gần đây
+      const tCount = hist.slice(-10).filter(h => h === "T").length;
+      const balance = Math.abs(tCount - (Math.min(10, len) - tCount));
+      confidence = 78 + balance * 2;
+      prediction = last === "T" ? "TÀI" : "XỈU";
+    }
+
+    return { prediction, confidence: Math.min(98, confidence), warning };
+  };
+
   const fetchData = useCallback(async () => {
     try {
       const { data: result, error } = await supabase.functions.invoke("lc79-proxy");
       if (error) throw error;
-      setApiData(result as LC79ApiResponse);
+      const apiResult = result as LC79ApiResponse;
+      setApiData(apiResult);
       setOnline(true);
 
-      // Save to history if new session
-      const latest = (result as LC79ApiResponse)?.list?.[0];
-      if (latest && latest.id !== lastSessionRef.current && user) {
+      const latest = apiResult?.list?.[0];
+      if (latest && latest.id !== lastSessionRef.current) {
         lastSessionRef.current = latest.id;
-        const isTai = latest.resultTruyenThong === "TAI";
-        // Deterministic confidence from session data
-        const recentList = (result as LC79ApiResponse)?.list?.slice(0, 10) ?? [];
-        const tC = recentList.filter(s => s.resultTruyenThong === "TAI").length;
-        const ratio = Math.abs(tC - (recentList.length - tC)) / Math.max(recentList.length, 1);
-        const percent = Math.min(98, Math.max(82, 78 + Math.round(ratio * 18) + 4));
-        await supabase.from("analysis_history").insert({
-          user_id: user.id,
-          game: "LC79",
-          md5_input: `Phiên #${latest.id}`,
-          result: isTai ? "Tài" : "Xỉu",
-          tai_percent: isTai ? percent : 100 - percent,
-          xiu_percent: isTai ? 100 - percent : percent,
-          confidence: percent,
-        });
+        
+        // Build history from API data
+        const apiHistory = (apiResult.list ?? []).slice(0, 20).reverse().map(s => s.resultTruyenThong === "TAI" ? "T" : "X");
+        historyRef.current = apiHistory;
+
+        if (user) {
+          const isTai = latest.resultTruyenThong === "TAI";
+          const analysis = analyzePattern(apiHistory);
+          await supabase.from("analysis_history").insert({
+            user_id: user.id,
+            game: "LC79",
+            md5_input: `Phiên #${latest.id + 1} (dự đoán)`,
+            result: analysis.prediction === "TÀI" ? "Tài" : "Xỉu",
+            tai_percent: analysis.prediction === "TÀI" ? analysis.confidence : 100 - analysis.confidence,
+            xiu_percent: analysis.prediction === "TÀI" ? 100 - analysis.confidence : analysis.confidence,
+            confidence: analysis.confidence,
+          });
+        }
       }
     } catch {
       setOnline(false);
@@ -122,48 +202,13 @@ export default function LC79Game() {
   const history = apiData?.list?.slice(0, 10) ?? [];
   const stat = apiData?.typeStat;
 
-  // Deterministic prediction based on session data patterns
-  const predictNext = () => {
-    if (!apiData?.list || apiData.list.length < 3) return { result: "…", percent: 0 };
-    const recent = apiData.list.slice(0, 10);
-    const taiCount = recent.filter(s => s.resultTruyenThong === "TAI").length;
-    const xiuCount = recent.length - taiCount;
-    
-    // Deterministic confidence based on streak and ratio
-    const lastResult = recent[0].resultTruyenThong;
-    let streak = 1;
-    for (let i = 1; i < recent.length; i++) {
-      if (recent[i].resultTruyenThong === lastResult) streak++;
-      else break;
-    }
-    
-    // Ratio-based confidence: stronger imbalance = higher confidence
-    const ratio = Math.abs(taiCount - xiuCount) / recent.length;
-    const streakBonus = Math.min(streak * 3, 12);
-    const baseConfidence = 78 + Math.round(ratio * 18) + streakBonus;
-    const percent = Math.min(98, Math.max(82, baseConfidence));
-    
-    // Point pattern analysis for prediction
-    const avgPoint = recent.reduce((s, r) => s + r.point, 0) / recent.length;
-    const pointTrend = recent[0].point - avgPoint;
-    
-    // Multi-factor prediction
-    let predictTai = false;
-    if (streak >= 3) {
-      // Reversal after long streak
-      predictTai = lastResult !== "TAI";
-    } else if (Math.abs(taiCount - xiuCount) >= 3) {
-      // Balance correction
-      predictTai = xiuCount > taiCount;
-    } else {
-      // Point trend analysis
-      predictTai = pointTrend < 0; // trending low = expect high
-    }
-    
-    return { result: predictTai ? "TÀI" : "XỈU", percent };
-  };
+  const prediction = (() => {
+    if (!apiData?.list || apiData.list.length < 3) return { result: "…", percent: 0, warning: undefined as string | undefined };
+    const analysis = analyzePattern(historyRef.current);
+    return { result: analysis.prediction, percent: analysis.confidence, warning: analysis.warning };
+  })();
 
-  const prediction = predictNext();
+  const nextSessionId = latest ? latest.id + 1 : null;
 
   return (
     <div className="min-h-screen relative" style={{ background: "#000", overflow: "hidden" }}>
@@ -241,7 +286,7 @@ export default function LC79Game() {
 
                 {/* Prediction */}
                 <div className="pt-2 mb-2" style={{ borderTop: "1px solid rgba(255,255,255,0.15)" }}>
-                  🤖 Dự đoán phiên tiếp:<br />
+                  🤖 Dự đoán phiên tiếp {nextSessionId && <span style={{ color: "#4db8ff", fontWeight: "bold" }}>#{nextSessionId}</span>}:<br />
                   <span style={{
                     color: prediction.result === "TÀI" ? "#00ff99" : "#ff3b5c",
                     fontWeight: "bold",
@@ -250,7 +295,13 @@ export default function LC79Game() {
                     {prediction.result}
                   </span>
                   <br />
-                  📊 Tỷ lệ: <span style={{ color: "#ffd966", fontWeight: "bold", fontSize: 13 }}>{prediction.percent}%</span>
+                  📊 Độ tin cậy: <span style={{ color: "#ffd966", fontWeight: "bold", fontSize: 13 }}>{prediction.percent}%</span>
+                  {prediction.warning && (
+                    <div style={{ fontSize: 9, color: prediction.warning.includes("Bệt") ? "#ff3b5c" : "#ffd700", marginTop: 4 }}>
+                      {prediction.warning}
+                    </div>
+                  )}
+                  <div style={{ fontSize: 9, color: "#aaa", marginTop: 3 }}>📈 {historyRef.current.slice(-8).join(" ")}</div>
                 </div>
 
                 {/* History dots */}
