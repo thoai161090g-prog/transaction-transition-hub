@@ -181,15 +181,15 @@ export default function GameDetail() {
       const isTai = resultVal.toString().toUpperCase().includes("T") || resultVal === "Tài";
       const currentResult = isTai ? "T" : "X";
       
-      // Add to history
-      historyRef.current = [...historyRef.current.slice(-19), currentResult];
-      
-      // Analyze pattern to predict NEXT session
+      // Analyze pattern BEFORE adding current result — predict for CURRENT session
       const analysis = analyzePattern(historyRef.current);
-      const nextSession = typeof session === "number" ? session + 1 : `${session}+1`;
+      const currentSession = typeof session === "number" ? session + 1 : `${session}+1`;
+      
+      // Now add result to history for future predictions
+      historyRef.current = [...historyRef.current.slice(-19), currentResult];
 
       setSunwinData({
-        session: nextSession,
+        session: currentSession,
         result: analysis.prediction,
         percent: analysis.confidence,
         prediction: analysis.prediction,
@@ -201,7 +201,7 @@ export default function GameDetail() {
 
       if (user) {
         await supabase.from("analysis_history").insert({
-          user_id: user.id, game: game.name, md5_input: `Phiên #${nextSession} (dự đoán)`,
+          user_id: user.id, game: game.name, md5_input: `Phiên #${currentSession} (dự đoán)`,
           result: analysis.prediction === "TÀI" ? "Tài" : "Xỉu",
           tai_percent: analysis.prediction === "TÀI" ? analysis.confidence : 100 - analysis.confidence,
           xiu_percent: analysis.prediction === "TÀI" ? 100 - analysis.confidence : analysis.confidence,
