@@ -72,7 +72,7 @@ export default function Index() {
             WebkitTextFillColor: "transparent",
             filter: "drop-shadow(0 2px 8px rgba(255,215,0,0.4))"
           }}>
-            <span className="rainbow-blink-icon">⭐</span> <span className="rainbow-blink-text">VĂN MINH VIP</span> <span className="rainbow-blink-icon">👑</span>
+            👑 <span>Văn Minh</span>
           </h1>
           <div className="flex items-center gap-3">
             <span className="text-[10px] px-2.5 py-1 rounded-full font-bold backdrop-blur-md" style={{
@@ -222,39 +222,39 @@ export default function Index() {
       </section>
 
       {/* Games grid */}
-      <section className="relative z-10 max-w-lg mx-auto px-3 py-2">
-        <p className="text-sm font-bold mb-3 flex items-center gap-1.5" style={{
+      <section className="relative z-10 max-w-lg mx-auto px-3 py-1">
+        <p className="text-xs font-bold mb-2.5 flex items-center gap-1.5" style={{
           background: "linear-gradient(135deg, #ffd700, #ffae42)",
           WebkitBackgroundClip: "text",
           WebkitTextFillColor: "transparent",
         }}>🔥 Danh sách trò chơi</p>
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-4 gap-2">
           {GAMES.map((game) => {
             const subtitle = GAME_SUBTITLES[game.id] || "";
             return (
               <div
                 key={game.id}
-                className="rounded-2xl p-3 cursor-pointer transition-all hover:scale-[1.04] active:scale-[0.96] flex flex-col items-center gap-2 group"
+                className="rounded-lg p-1.5 cursor-pointer transition-all hover:scale-[1.04] active:scale-[0.96] flex flex-col items-center gap-1 group"
                 style={{
                   background: "linear-gradient(135deg, rgba(15,25,50,0.8), rgba(20,30,55,0.6))",
-                  border: "1px solid rgba(255,215,0,0.12)",
-                  boxShadow: "0 4px 15px rgba(0,0,0,0.3)"
+                  border: "1px solid rgba(255,215,0,0.08)",
+                  boxShadow: "0 2px 10px rgba(0,0,0,0.2)"
                 }}
                 onClick={() => navigate(`/game/${game.id}`)}
               >
-                <div className="w-16 h-16 rounded-xl flex items-center justify-center text-2xl overflow-hidden transition-all group-hover:shadow-lg" style={{
+                <div className="w-11 h-11 rounded-lg flex items-center justify-center text-base overflow-hidden transition-all group-hover:shadow-lg" style={{
                   background: game.image ? "transparent" : "linear-gradient(135deg, rgba(255,215,0,0.2), rgba(255,174,66,0.1))",
-                  boxShadow: "0 3px 12px rgba(0,0,0,0.4)",
+                  boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
                 }}>
                   {game.image ? (
-                    <img src={game.image} alt={game.name} className="w-full h-full object-cover rounded-xl" />
+                    <img src={game.image} alt={game.name} className="w-full h-full object-cover rounded-lg" />
                   ) : (
                     game.icon
                   )}
                 </div>
                 <div className="text-center">
-                  <p className="font-black text-[11px] text-white/90 leading-tight">{game.name.toUpperCase()}</p>
-                  <p className="text-[9px] mt-0.5" style={{ color: "rgba(255,215,0,0.5)" }}>{subtitle}</p>
+                  <p className="font-black text-[8px] text-white/90 leading-tight">{game.name.toUpperCase()}</p>
+                  <p className="text-[7px]" style={{ color: "rgba(255,215,0,0.4)" }}>{subtitle}</p>
                 </div>
               </div>
             );

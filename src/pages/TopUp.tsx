@@ -14,7 +14,7 @@ const TELCOS = [
   { id: "garena", name: "Garena", color: "#ff5500" },
 ];
 
-const CARD_AMOUNTS = [10000, 20000, 35000, 50000, 55000, 100000, 130000, 200000, 220000, 300000, 500000];
+const CARD_AMOUNTS = [10000, 20000, 50000, 100000, 200000, 500000];
 
 export default function TopUp() {
   const { user } = useAuth();

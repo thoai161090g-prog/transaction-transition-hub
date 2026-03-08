@@ -6,11 +6,11 @@ export interface KeyPackage {
 }
 
 export const KEY_PACKAGES: KeyPackage[] = [
-  { id: "1day", label: "1 Ngày", price: 35000, days: 1 },
+  { id: "1day", label: "1 Ngày", price: 25000, days: 1 },
   { id: "3days", label: "3 Ngày", price: 55000, days: 3 },
-  { id: "1week", label: "1 Tuần", price: 130000, days: 7 },
-  { id: "1month", label: "1 Tháng", price: 220000, days: 30 },
-  { id: "lifetime", label: "Vĩnh Viễn", price: 300000, days: null },
+  { id: "1week", label: "1 Tuần", price: 89000, days: 7 },
+  { id: "1month", label: "1 Tháng", price: 120000, days: 30 },
+  { id: "lifetime", label: "Vĩnh Viễn", price: 177000, days: null },
 ];
 
 export const formatVND = (amount: number) =>
