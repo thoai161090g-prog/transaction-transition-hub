@@ -4,16 +4,28 @@ import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 
-interface SessionItem {
-  id: number;
-  resultTruyenThong: string;
-  dices: number[];
-  point: number;
+interface BettingInfo {
+  phien_cuoc: number;
+  tick: number;
+  sub_tick: number;
+  trang_thai: string;
+  tong_nguoi_cuoc: number;
+  tong_tien_cuoc: string;
+  nguoi_cuoc: { tai: number; xiu: number };
+  tien_cuoc: { tai: string; xiu: string };
 }
 
 interface LC79ApiResponse {
-  list: SessionItem[];
-  typeStat: { TAI: number; XIU: number };
+  phien: string;
+  ket_qua: string;
+  xuc_xac_1: number;
+  xuc_xac_2: number;
+  xuc_xac_3: number;
+  tong: number;
+  md5_raw: string;
+  betting_info: BettingInfo;
+  update_at: string;
+  tick_update_at: string;
 }
 
 export default function LC79Game() {
