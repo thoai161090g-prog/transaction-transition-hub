@@ -201,7 +201,7 @@ export default function GameDetail() {
 
       if (user) {
         await supabase.from("analysis_history").insert({
-          user_id: user.id, game: game.name, md5_input: `Phiên #${nextSession} (dự đoán)`,
+          user_id: user.id, game: game.name, md5_input: `Phiên #${currentSession} (dự đoán)`,
           result: analysis.prediction === "TÀI" ? "Tài" : "Xỉu",
           tai_percent: analysis.prediction === "TÀI" ? analysis.confidence : 100 - analysis.confidence,
           xiu_percent: analysis.prediction === "TÀI" ? 100 - analysis.confidence : analysis.confidence,
