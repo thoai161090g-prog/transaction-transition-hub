@@ -172,7 +172,7 @@ export default function BCRGame() {
               </>
             ) : (
               <>
-                <div className="font-bold mb-2 flex items-center justify-between" style={{ color: "#e0b0ff", fontSize: 13 }}>
+                <div className="font-bold mb-1.5 flex items-center justify-between" style={{ color: "#e0b0ff", fontSize: 11 }}>
                   <span>🤖 SEXY BCR VIP TOOL</span>
                   <div
                     className="px-2 py-0.5 rounded text-[10px] cursor-pointer"
