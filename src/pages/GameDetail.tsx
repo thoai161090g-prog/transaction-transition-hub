@@ -189,7 +189,7 @@ export default function GameDetail() {
       historyRef.current = [...historyRef.current.slice(-19), currentResult];
 
       setSunwinData({
-        session: nextSession,
+        session: currentSession,
         result: analysis.prediction,
         percent: analysis.confidence,
         prediction: analysis.prediction,
