@@ -323,7 +323,7 @@ export default function LC79Game() {
 
                 {/* History dots */}
                 <div className="flex gap-1 flex-wrap mt-1 pt-1.5" style={{ borderTop: "1px solid rgba(255,255,255,0.1)" }}>
-                  {historyRef.current.slice(-10).map((h, i) => (
+                  {history.slice(-10).map((h, i) => (
                     <div key={i} className="w-3 h-3 rounded-full" title={h === "T" ? "TÀI" : "XỈU"} style={{
                       background: h === "T" ? "#00ff99" : "#ff3b5c",
                       boxShadow: h === "T" ? "0 0 5px #00ff99" : "0 0 5px #ff3b5c",
