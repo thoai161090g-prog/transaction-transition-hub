@@ -286,7 +286,7 @@ export default function LC79Game() {
 
                 {/* Prediction */}
                 <div className="pt-2 mb-2" style={{ borderTop: "1px solid rgba(255,255,255,0.15)" }}>
-                  🤖 Dự đoán phiên tiếp:<br />
+                  🤖 Dự đoán phiên tiếp {nextSessionId && <span style={{ color: "#4db8ff", fontWeight: "bold" }}>#{nextSessionId}</span>}:<br />
                   <span style={{
                     color: prediction.result === "TÀI" ? "#00ff99" : "#ff3b5c",
                     fontWeight: "bold",
@@ -295,7 +295,13 @@ export default function LC79Game() {
                     {prediction.result}
                   </span>
                   <br />
-                  📊 Tỷ lệ: <span style={{ color: "#ffd966", fontWeight: "bold", fontSize: 13 }}>{prediction.percent}%</span>
+                  📊 Độ tin cậy: <span style={{ color: "#ffd966", fontWeight: "bold", fontSize: 13 }}>{prediction.percent}%</span>
+                  {prediction.warning && (
+                    <div style={{ fontSize: 9, color: prediction.warning.includes("Bệt") ? "#ff3b5c" : "#ffd700", marginTop: 4 }}>
+                      {prediction.warning}
+                    </div>
+                  )}
+                  <div style={{ fontSize: 9, color: "#aaa", marginTop: 3 }}>📈 {historyRef.current.slice(-8).join(" ")}</div>
                 </div>
 
                 {/* History dots */}
