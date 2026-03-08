@@ -145,8 +145,8 @@ export default function BCRGame() {
         <img
           src="/images/robot_bcr.gif"
           alt="Robot BCR"
-          className="w-[80px] h-[80px] cursor-move rounded-full"
-          style={{ border: "2px solid #ffd700", boxShadow: "0 0 15px rgba(255,215,0,0.5)" }}
+          className="w-[60px] h-[60px] cursor-move rounded-full"
+          style={{ border: "2px solid #ffd700", boxShadow: "0 0 10px rgba(255,215,0,0.5)" }}
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
@@ -154,16 +154,16 @@ export default function BCRGame() {
 
         {/* Chat bubble */}
         {popupVisible && (
-          <div className="ml-2.5 relative" style={{
+          <div className="ml-1.5 relative" style={{
             background: "linear-gradient(145deg, rgba(10,0,30,0.95), rgba(30,0,60,0.9))",
             color: "#fff",
-            padding: 14,
-            borderRadius: 16,
-            width: 270,
+            padding: 10,
+            borderRadius: 12,
+            width: 220,
             backdropFilter: "blur(10px)",
             border: "1px solid rgba(180,100,255,0.3)",
-            boxShadow: "0 0 25px rgba(128,0,255,0.3), inset 0 0 20px rgba(128,0,255,0.1)",
-            fontSize: 13,
+            boxShadow: "0 0 20px rgba(128,0,255,0.3), inset 0 0 15px rgba(128,0,255,0.1)",
+            fontSize: 11,
           }}>
             {!online ? (
               <>
