@@ -278,23 +278,23 @@ export default function LC79Game() {
                 <span>🤖 Robot LC79</span><br />
                 <span style={{ color: "#4db8ff" }}>🔄 Đang kết nối API...</span>
               </>
-            ) : latest ? (
+            ) : apiData ? (
               <>
                 <div className="font-bold mb-1" style={{ color: "#ffd700", fontSize: 11 }}>🤖 Robot LC79</div>
 
                 {/* Current session */}
                 <div className="mb-2">
-                  🎯 Phiên <span style={{ color: "#4db8ff", fontWeight: "bold" }}>#{latest.id}</span>
+                  🎯 Phiên <span style={{ color: "#4db8ff", fontWeight: "bold" }}>#{phienId}</span>
                   <br />
-                  🎲 Xúc xắc: <span style={{ fontWeight: "bold", color: "#fff" }}>{latest.dices.join(" - ")}</span>
+                  🎲 Xúc xắc: <span style={{ fontWeight: "bold", color: "#fff" }}>{dices.join(" - ")}</span>
                   <br />
-                  📊 Điểm: <span style={{ fontWeight: "bold", color: "#facc15" }}>{latest.point}</span>
+                  📊 Điểm: <span style={{ fontWeight: "bold", color: "#facc15" }}>{point}</span>
                   <span style={{
                     marginLeft: 8,
                     fontWeight: "bold",
-                    color: latest.resultTruyenThong === "TAI" ? "#00ff99" : "#ff3b5c",
+                    color: isTai ? "#00ff99" : "#ff3b5c",
                   }}>
-                    {latest.resultTruyenThong}
+                    {isTai ? "TÀI" : "XỈU"}
                   </span>
                 </div>
 
@@ -320,18 +320,18 @@ export default function LC79Game() {
 
                 {/* History dots */}
                 <div className="flex gap-1 flex-wrap mt-1 pt-1.5" style={{ borderTop: "1px solid rgba(255,255,255,0.1)" }}>
-                  {history.map((s, i) => (
-                    <div key={i} className="w-3 h-3 rounded-full" title={`#${s.id}: ${s.resultTruyenThong} (${s.point})`} style={{
-                      background: s.resultTruyenThong === "TAI" ? "#00ff99" : "#ff3b5c",
-                      boxShadow: s.resultTruyenThong === "TAI" ? "0 0 5px #00ff99" : "0 0 5px #ff3b5c",
+                  {historyRef.current.slice(-10).map((h, i) => (
+                    <div key={i} className="w-3 h-3 rounded-full" title={h === "T" ? "TÀI" : "XỈU"} style={{
+                      background: h === "T" ? "#00ff99" : "#ff3b5c",
+                      boxShadow: h === "T" ? "0 0 5px #00ff99" : "0 0 5px #ff3b5c",
                     }} />
                   ))}
                 </div>
 
-                {/* Stats */}
-                {stat && (
+                {/* Betting info */}
+                {betting && (
                   <div className="text-[11px] mt-1.5" style={{ color: "#aaa" }}>
-                    Thống kê: <span style={{ color: "#00ff99" }}>TÀI {stat.TAI}</span> / <span style={{ color: "#ff3b5c" }}>XỈU {stat.XIU}</span>
+                    Cược: <span style={{ color: "#00ff99" }}>TÀI {betting.nguoi_cuoc.tai}</span> / <span style={{ color: "#ff3b5c" }}>XỈU {betting.nguoi_cuoc.xiu}</span>
                   </div>
                 )}
 
