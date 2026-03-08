@@ -211,15 +211,14 @@ export default function BCRGame() {
 
                 {current ? (
                   <>
-                    {/* Current session */}
-                    <div className="mb-2">
+                    <div className="mb-1">
                       🎯 Phiên <span style={{ color: "#4db8ff", fontWeight: "bold" }}>#{current.phien_hien_tai}</span>
-                      <span className="ml-2 text-[10px]" style={{ color: "#888" }}>{current.time}</span>
+                      <span className="ml-1 text-[9px]" style={{ color: "#888" }}>{current.time}</span>
                     </div>
 
                     {/* Last result */}
-                    <div className="mb-1 text-xs" style={{ color: "#aaa" }}>
-                      📊 Kết quả phiên #{current.phien}: {
+                    <div className="mb-0.5 text-[10px]" style={{ color: "#aaa" }}>
+                      📊 P#{current.phien}: {
                         current.ket_qua.slice(-1) === "B" ? <span style={{ color: "#ff3b5c" }}>Banker</span>
                         : current.ket_qua.slice(-1) === "P" ? <span style={{ color: "#4d8bff" }}>Player</span>
                         : <span style={{ color: "#00ff99" }}>Tie</span>
@@ -227,28 +226,26 @@ export default function BCRGame() {
                     </div>
 
                     {current.cau && (
-                      <div className="text-[11px] mb-2" style={{ color: "#e0b0ff" }}>
+                      <div className="text-[10px] mb-1" style={{ color: "#e0b0ff" }}>
                         🔮 Cầu: {current.cau}
                       </div>
                     )}
 
                     {/* Prediction */}
-                    <div className="pt-2 mb-2" style={{ borderTop: "1px solid rgba(255,255,255,0.1)" }}>
-                      🤖 Dự đoán phiên tiếp:<br />
-                      <div className="flex items-center gap-3 mt-1">
-                        <span style={{
-                          color: isPlayer ? "#4d8bff" : "#ff3b5c",
-                          fontWeight: "bold",
-                          fontSize: 20,
-                          textShadow: isPlayer ? "0 0 10px rgba(77,139,255,0.6)" : "0 0 10px rgba(255,59,92,0.6)",
-                        }}>
-                          {current.du_doan}
-                        </span>
+                    <div className="pt-1 mb-1" style={{ borderTop: "1px solid rgba(255,255,255,0.1)" }}>
+                      🤖 Dự đoán:<br />
+                      <span style={{
+                        color: isPlayer ? "#4d8bff" : "#ff3b5c",
+                        fontWeight: "bold",
+                        fontSize: 16,
+                        textShadow: isPlayer ? "0 0 8px rgba(77,139,255,0.6)" : "0 0 8px rgba(255,59,92,0.6)",
+                      }}>
+                        {current.du_doan}
+                      </span>
+                      <div className="mt-0.5">
+                        📊 Tin cậy: <span style={{ color: "#ffd966", fontWeight: "bold", fontSize: 13 }}>{current.do_tin_cay}</span>
                       </div>
-                      <div className="mt-1">
-                        📊 Độ tin cậy: <span style={{ color: "#ffd966", fontWeight: "bold", fontSize: 16 }}>{current.do_tin_cay}</span>
-                      </div>
-                      <div className="text-[10px] mt-0.5" style={{ color: "#888" }}>
+                      <div className="text-[9px]" style={{ color: "#888" }}>
                         ⚙️ {current.thuat_toan}
                       </div>
                     </div>
