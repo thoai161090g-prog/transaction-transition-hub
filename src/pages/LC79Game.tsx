@@ -50,16 +50,11 @@ export default function LC79Game() {
 
   const historyRef = useRef<string[]>([]); // "T" or "X"
 
-  // Pattern analysis - NO random
+  // Enhanced pattern analysis - predicts NEXT session from previous results
   const analyzePattern = (hist: string[]): { prediction: string; confidence: number; warning?: string } => {
     const len = hist.length;
-    if (len < 1) {
-      return { prediction: "TÀI", confidence: 50 };
-    }
-    if (len < 2) {
-      const last = hist[len - 1];
-      return { prediction: last === "T" ? "XỈU" : "TÀI", confidence: 75 };
-    }
+    if (len < 1) return { prediction: "TÀI", confidence: 50 };
+    if (len < 2) return { prediction: hist[0] === "T" ? "XỈU" : "TÀI", confidence: 70 };
 
     const last = hist[len - 1];
     let streakCount = 1;
@@ -68,64 +63,109 @@ export default function LC79Game() {
       else break;
     }
 
-    // 1-1 alternating: T X T X
-    const isAlternating = len >= 4 && hist.slice(-4).every((v, i, a) => i === 0 || v !== a[i - 1]);
-    // 2-2 rhythm: TT XX TT XX
-    const is22 = len >= 6 && (() => {
-      const s = hist.slice(-6);
-      return s[0] === s[1] && s[2] === s[3] && s[4] === s[5] && s[0] !== s[2] && s[2] !== s[4];
-    })();
-    // 3-3 rhythm: TTT XXX TTT
-    const is33 = len >= 9 && (() => {
-      const s = hist.slice(-9);
-      return s[0] === s[1] && s[1] === s[2] && s[3] === s[4] && s[4] === s[5] && s[6] === s[7] && s[7] === s[8] && s[0] !== s[3] && s[3] !== s[6];
-    })();
+    // === Check 3-3 rhythm ===
+    const check33 = (h: string[]): boolean => {
+      if (h.length < 6) return false;
+      const recent = h.slice(-Math.min(12, h.length));
+      let groups: string[] = [];
+      let cur = recent[0], cnt = 1;
+      for (let i = 1; i < recent.length; i++) {
+        if (recent[i] === cur) cnt++; else { groups.push(`${cur}${cnt}`); cur = recent[i]; cnt = 1; }
+      }
+      groups.push(`${cur}${cnt}`);
+      return groups.filter(g => parseInt(g.slice(1)) === 3).length >= 2;
+    };
+
+    // === Check 2-2 rhythm ===
+    const check22 = (h: string[]): boolean => {
+      if (h.length < 4) return false;
+      const recent = h.slice(-Math.min(10, h.length));
+      let groups: string[] = [];
+      let cur = recent[0], cnt = 1;
+      for (let i = 1; i < recent.length; i++) {
+        if (recent[i] === cur) cnt++; else { groups.push(`${cur}${cnt}`); cur = recent[i]; cnt = 1; }
+      }
+      groups.push(`${cur}${cnt}`);
+      return groups.filter(g => parseInt(g.slice(1)) === 2).length >= 2;
+    };
+
+    // === Check 1-1 alternating ===
+    const check11 = (h: string[]): boolean => {
+      if (h.length < 4) return false;
+      const recent = h.slice(-6);
+      return recent.length >= 4 && recent.every((v, i, a) => i === 0 || v !== a[i - 1]);
+    };
+
+    const is33 = check33(hist);
+    const is22 = check22(hist);
+    const is11 = check11(hist);
 
     let prediction: string;
     let confidence: number;
     let warning: string | undefined;
 
-    if (is33) {
-      const groupPos = streakCount % 3;
-      if (groupPos > 0 && groupPos < 3) {
-        prediction = last === "T" ? "TÀI" : "XỈU";
-        confidence = 93;
-      } else {
-        prediction = last === "T" ? "XỈU" : "TÀI";
-        confidence = 91;
-      }
-      warning = "🔥 Nhịp 3-3 phát hiện";
-    } else if (is22) {
-      const groupPos = streakCount % 2;
-      if (groupPos > 0 && groupPos < 2) {
-        prediction = last === "T" ? "TÀI" : "XỈU";
-        confidence = 91;
-      } else {
-        prediction = last === "T" ? "XỈU" : "TÀI";
-        confidence = 89;
-      }
-      warning = "🔥 Nhịp 2-2 phát hiện";
-    } else if (isAlternating) {
+    // === Bệt dài - GIẢM độ tin cậy mạnh ===
+    if (streakCount >= 7) {
       prediction = last === "T" ? "XỈU" : "TÀI";
-      confidence = 90;
-      warning = "🔥 Nhịp 1-1 phát hiện";
+      confidence = 45;
+      warning = `🚨 BỆT CỰC DÀI ${streakCount} phiên! Rất rủi ro`;
     } else if (streakCount >= 5) {
       prediction = last === "T" ? "XỈU" : "TÀI";
-      confidence = 58;
-      warning = `⚠️ Bệt dài ${streakCount} phiên! Cẩn thận`;
-    } else if (streakCount >= 3) {
+      confidence = 55;
+      warning = `⚠️ Bệt dài ${streakCount} phiên! Cẩn thận gấp`;
+    } else if (streakCount >= 4) {
       prediction = last === "T" ? "XỈU" : "TÀI";
-      confidence = 72;
+      confidence = 62;
+      warning = `⚠️ Bệt ${streakCount} phiên - Khả năng đảo chiều`;
+    }
+    // === Nhịp cầu - ĐỘ TIN CẬY CAO ===
+    else if (is33) {
+      const groupPos = streakCount % 3;
+      if (groupPos === 0) {
+        prediction = last === "T" ? "XỈU" : "TÀI";
+        confidence = 94;
+      } else {
+        prediction = last === "T" ? "TÀI" : "XỈU";
+        confidence = 93;
+      }
+      warning = "🔥 Nhịp cầu 3-3 phát hiện";
+    } else if (is22) {
+      const groupPos = streakCount % 2;
+      if (groupPos === 0) {
+        prediction = last === "T" ? "XỈU" : "TÀI";
+        confidence = 92;
+      } else {
+        prediction = last === "T" ? "TÀI" : "XỈU";
+        confidence = 91;
+      }
+      warning = "🔥 Nhịp cầu 2-2 phát hiện";
+    } else if (is11) {
+      prediction = last === "T" ? "XỈU" : "TÀI";
+      confidence = 93;
+      warning = "🔥 Nhịp cầu 1-1 phát hiện";
+    }
+    // === Chuỗi ngắn ===
+    else if (streakCount === 3) {
+      prediction = last === "T" ? "XỈU" : "TÀI";
+      confidence = 75;
       warning = `⚠️ Chuỗi ${streakCount} - Có thể đổi chiều`;
-    } else {
-      // Tính confidence dựa trên tỉ lệ T/X gần đây
-      const tCount = hist.slice(-10).filter(h => h === "T").length;
-      const balance = Math.abs(tCount - (Math.min(10, len) - tCount));
-      confidence = 78 + balance * 2;
-      prediction = last === "T" ? "TÀI" : "XỈU";
+    }
+    // === Mặc định ===
+    else {
+      const window10 = hist.slice(-10);
+      const tCount = window10.filter(h => h === "T").length;
+      const xCount = window10.length - tCount;
+      const diff = Math.abs(tCount - xCount);
+      if (diff >= 4) {
+        prediction = tCount > xCount ? "XỈU" : "TÀI";
+        confidence = 80 + diff;
+      } else {
+        prediction = last === "T" ? "TÀI" : "XỈU";
+        confidence = 76 + diff * 2;
+      }
     }
 
-    return { prediction, confidence: Math.min(98, confidence), warning };
+    return { prediction, confidence: Math.min(98, Math.max(40, confidence)), warning };
   };
 
   const fetchData = useCallback(async () => {
