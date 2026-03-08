@@ -53,6 +53,9 @@ export default function LC79Game() {
   // Pattern analysis - NO random
   const analyzePattern = (hist: string[]): { prediction: string; confidence: number; warning?: string } => {
     const len = hist.length;
+    if (len < 1) {
+      return { prediction: "TÀI", confidence: 50 };
+    }
     if (len < 2) {
       const last = hist[len - 1];
       return { prediction: last === "T" ? "XỈU" : "TÀI", confidence: 75 };
@@ -142,7 +145,7 @@ export default function LC79Game() {
         historyRef.current = [...historyRef.current, currentResult].slice(-20);
         lastSessionRef.current = phienId;
 
-        if (user && historyRef.current.length >= 2) {
+        if (user && historyRef.current.length >= 1) {
           const analysis = analyzePattern(historyRef.current);
           await supabase.from("analysis_history").insert({
             user_id: user.id,
@@ -214,12 +217,12 @@ export default function LC79Game() {
   const dices = apiData ? [apiData.xuc_xac_1, apiData.xuc_xac_2, apiData.xuc_xac_3] : [];
   const point = apiData?.tong ?? 0;
   const resultText = apiData?.ket_qua ?? "";
-  const isTai = resultText.toLowerCase().includes("t");
+  const isTai = !resultText.toLowerCase().includes("x");
   const betting = apiData?.betting_info;
   const nextSessionId = betting?.phien_cuoc ?? (phienId ? phienId + 1 : null);
 
   const prediction = (() => {
-    if (historyRef.current.length < 2) return { result: "…", percent: 0, warning: undefined as string | undefined };
+    if (historyRef.current.length < 1) return { result: "…", percent: 0, warning: undefined as string | undefined };
     const analysis = analyzePattern(historyRef.current);
     return { result: analysis.prediction, percent: analysis.confidence, warning: analysis.warning };
   })();
