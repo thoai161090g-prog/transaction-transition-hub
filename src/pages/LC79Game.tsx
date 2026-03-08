@@ -217,7 +217,7 @@ export default function LC79Game() {
   const dices = apiData ? [apiData.xuc_xac_1, apiData.xuc_xac_2, apiData.xuc_xac_3] : [];
   const point = apiData?.tong ?? 0;
   const resultText = apiData?.ket_qua ?? "";
-  const isTai = resultText.toLowerCase().includes("t");
+  const isTai = !resultText.toLowerCase().includes("x");
   const betting = apiData?.betting_info;
   const nextSessionId = betting?.phien_cuoc ?? (phienId ? phienId + 1 : null);
 
