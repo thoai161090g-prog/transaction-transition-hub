@@ -145,8 +145,8 @@ export default function BCRGame() {
         <img
           src="/images/robot_bcr.gif"
           alt="Robot BCR"
-          className="w-[80px] h-[80px] cursor-move rounded-full"
-          style={{ border: "2px solid #ffd700", boxShadow: "0 0 15px rgba(255,215,0,0.5)" }}
+          className="w-[60px] h-[60px] cursor-move rounded-full"
+          style={{ border: "2px solid #ffd700", boxShadow: "0 0 10px rgba(255,215,0,0.5)" }}
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
@@ -154,16 +154,16 @@ export default function BCRGame() {
 
         {/* Chat bubble */}
         {popupVisible && (
-          <div className="ml-2.5 relative" style={{
+          <div className="ml-1.5 relative" style={{
             background: "linear-gradient(145deg, rgba(10,0,30,0.95), rgba(30,0,60,0.9))",
             color: "#fff",
-            padding: 14,
-            borderRadius: 16,
-            width: 270,
+            padding: 10,
+            borderRadius: 12,
+            width: 220,
             backdropFilter: "blur(10px)",
             border: "1px solid rgba(180,100,255,0.3)",
-            boxShadow: "0 0 25px rgba(128,0,255,0.3), inset 0 0 20px rgba(128,0,255,0.1)",
-            fontSize: 13,
+            boxShadow: "0 0 20px rgba(128,0,255,0.3), inset 0 0 15px rgba(128,0,255,0.1)",
+            fontSize: 11,
           }}>
             {!online ? (
               <>
@@ -172,7 +172,7 @@ export default function BCRGame() {
               </>
             ) : (
               <>
-                <div className="font-bold mb-2 flex items-center justify-between" style={{ color: "#e0b0ff", fontSize: 13 }}>
+                <div className="font-bold mb-1.5 flex items-center justify-between" style={{ color: "#e0b0ff", fontSize: 11 }}>
                   <span>🤖 SEXY BCR VIP TOOL</span>
                   <div
                     className="px-2 py-0.5 rounded text-[10px] cursor-pointer"
@@ -211,15 +211,14 @@ export default function BCRGame() {
 
                 {current ? (
                   <>
-                    {/* Current session */}
-                    <div className="mb-2">
+                    <div className="mb-1">
                       🎯 Phiên <span style={{ color: "#4db8ff", fontWeight: "bold" }}>#{current.phien_hien_tai}</span>
-                      <span className="ml-2 text-[10px]" style={{ color: "#888" }}>{current.time}</span>
+                      <span className="ml-1 text-[9px]" style={{ color: "#888" }}>{current.time}</span>
                     </div>
 
                     {/* Last result */}
-                    <div className="mb-1 text-xs" style={{ color: "#aaa" }}>
-                      📊 Kết quả phiên #{current.phien}: {
+                    <div className="mb-0.5 text-[10px]" style={{ color: "#aaa" }}>
+                      📊 P#{current.phien}: {
                         current.ket_qua.slice(-1) === "B" ? <span style={{ color: "#ff3b5c" }}>Banker</span>
                         : current.ket_qua.slice(-1) === "P" ? <span style={{ color: "#4d8bff" }}>Player</span>
                         : <span style={{ color: "#00ff99" }}>Tie</span>
@@ -227,38 +226,36 @@ export default function BCRGame() {
                     </div>
 
                     {current.cau && (
-                      <div className="text-[11px] mb-2" style={{ color: "#e0b0ff" }}>
+                      <div className="text-[10px] mb-1" style={{ color: "#e0b0ff" }}>
                         🔮 Cầu: {current.cau}
                       </div>
                     )}
 
                     {/* Prediction */}
-                    <div className="pt-2 mb-2" style={{ borderTop: "1px solid rgba(255,255,255,0.1)" }}>
-                      🤖 Dự đoán phiên tiếp:<br />
-                      <div className="flex items-center gap-3 mt-1">
-                        <span style={{
-                          color: isPlayer ? "#4d8bff" : "#ff3b5c",
-                          fontWeight: "bold",
-                          fontSize: 20,
-                          textShadow: isPlayer ? "0 0 10px rgba(77,139,255,0.6)" : "0 0 10px rgba(255,59,92,0.6)",
-                        }}>
-                          {current.du_doan}
-                        </span>
+                    <div className="pt-1 mb-1" style={{ borderTop: "1px solid rgba(255,255,255,0.1)" }}>
+                      🤖 Dự đoán:<br />
+                      <span style={{
+                        color: isPlayer ? "#4d8bff" : "#ff3b5c",
+                        fontWeight: "bold",
+                        fontSize: 16,
+                        textShadow: isPlayer ? "0 0 8px rgba(77,139,255,0.6)" : "0 0 8px rgba(255,59,92,0.6)",
+                      }}>
+                        {current.du_doan}
+                      </span>
+                      <div className="mt-0.5">
+                        📊 Tin cậy: <span style={{ color: "#ffd966", fontWeight: "bold", fontSize: 13 }}>{current.do_tin_cay}</span>
                       </div>
-                      <div className="mt-1">
-                        📊 Độ tin cậy: <span style={{ color: "#ffd966", fontWeight: "bold", fontSize: 16 }}>{current.do_tin_cay}</span>
-                      </div>
-                      <div className="text-[10px] mt-0.5" style={{ color: "#888" }}>
+                      <div className="text-[9px]" style={{ color: "#888" }}>
                         ⚙️ {current.thuat_toan}
                       </div>
                     </div>
 
                     {/* History dots */}
-                    <div className="flex gap-1 flex-wrap mt-1 pt-1.5" style={{ borderTop: "1px solid rgba(255,255,255,0.1)" }}>
+                    <div className="flex gap-0.5 flex-wrap mt-1 pt-1" style={{ borderTop: "1px solid rgba(255,255,255,0.1)" }}>
                       {resultDots.map((c, i) => (
-                        <div key={i} className="w-3 h-3 rounded-full text-[7px] flex items-center justify-center font-bold" style={{
+                        <div key={i} className="w-2.5 h-2.5 rounded-full text-[6px] flex items-center justify-center font-bold" style={{
                           background: c === "B" ? "#ff3b5c" : c === "P" ? "#4d8bff" : "#00ff99",
-                          boxShadow: c === "B" ? "0 0 4px #ff3b5c" : c === "P" ? "0 0 4px #4d8bff" : "0 0 4px #00ff99",
+                          boxShadow: c === "B" ? "0 0 3px #ff3b5c" : c === "P" ? "0 0 3px #4d8bff" : "0 0 3px #00ff99",
                           color: "#fff",
                         }}>
                           {c}
@@ -267,10 +264,10 @@ export default function BCRGame() {
                     </div>
                   </>
                 ) : (
-                  <div style={{ color: "#aaa" }}>Chọn bàn để xem dự đoán</div>
+                  <div style={{ color: "#aaa", fontSize: 10 }}>Chọn bàn để xem dự đoán</div>
                 )}
 
-                <div className="text-[10px] mt-2" style={{ color: "#666" }}>🟢 Đã đồng bộ game</div>
+                <div className="text-[9px] mt-1" style={{ color: "#666" }}>🟢 Đã đồng bộ game</div>
               </>
             )}
 
