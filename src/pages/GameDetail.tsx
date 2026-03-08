@@ -425,12 +425,10 @@ export default function GameDetail() {
 
           <div className="flex justify-between items-center mb-4 cursor-move"
             onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp}>
-            <span className="font-black text-sm" style={{
+            <span className="font-black text-sm rainbow-blink-text" style={{
               fontFamily: "Orbitron, sans-serif",
-              background: "linear-gradient(to right, #fff, #ffd700)",
-              WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
             }}>
-              {game.icon} VĂN MINH VIP ⚡
+              <span className="rainbow-blink-icon">⭐</span> VĂN MINH VIP <span className="rainbow-blink-icon">👑</span>
             </span>
             <span className="cursor-pointer font-bold" style={{ color: "rgba(255,255,255,0.5)" }}
               onClick={() => setPopupVisible(false)}>✕</span>

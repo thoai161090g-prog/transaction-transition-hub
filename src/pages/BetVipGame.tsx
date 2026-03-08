@@ -187,23 +187,18 @@ export default function BetVipGame() {
         {/* Header */}
         <div className="text-center mb-6">
           <span
-            className="inline-block px-6 py-1.5 rounded-full font-black text-xs tracking-[3px] text-white"
+            className="inline-block px-6 py-1.5 rounded-full font-black text-xs tracking-[3px] rainbow-blink-text"
             style={{
-              background: "linear-gradient(90deg, #000, #ffcc00, #000)",
-              backgroundSize: "200% auto",
               border: "1px solid rgba(255,255,255,0.3)",
-              animation: "gradientFlow 3s infinite linear",
             }}
           >
-            💎 VAN MINH VIP 2026 💎
+            <span className="rainbow-blink-icon">⭐</span> VĂN MINH VIP 2026 <span className="rainbow-blink-icon">👑</span>
           </span>
           <h1
-            className="text-3xl mt-3 mb-1 tracking-wide"
+            className="text-3xl mt-3 mb-1 tracking-wide rainbow-blink-text"
             style={{
               fontFamily: "Orbitron, sans-serif",
               fontWeight: 900,
-              color: "#ffcc00",
-              textShadow: "0 0 15px rgba(255,204,0,0.6)",
             }}
           >
             ALGORITHM PRO
