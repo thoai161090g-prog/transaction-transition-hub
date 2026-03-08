@@ -133,24 +133,27 @@ export default function LC79Game() {
       setApiData(apiResult);
       setOnline(true);
 
-      // Always rebuild history from full API list for instant pattern detection
-      const apiHistory = (apiResult.list ?? []).slice(0, 20).reverse().map(s => s.resultTruyenThong === "TAI" ? "T" : "X");
-      historyRef.current = apiHistory;
+      // Add current result to history
+      const currentResult = apiResult.ket_qua?.toLowerCase().includes("t") ? "T" : "X";
+      const phienId = parseInt(apiResult.phien);
+      
+      // Only update history when new session
+      if (phienId !== lastSessionRef.current) {
+        historyRef.current = [...historyRef.current, currentResult].slice(-20);
+        lastSessionRef.current = phienId;
 
-      // Only save to DB when new session appears
-      const latest = apiResult?.list?.[0];
-      if (latest && latest.id !== lastSessionRef.current && user) {
-        lastSessionRef.current = latest.id;
-        const analysis = analyzePattern(apiHistory);
-        await supabase.from("analysis_history").insert({
-          user_id: user.id,
-          game: "LC79",
-          md5_input: `Phiên #${latest.id + 1} (dự đoán)`,
-          result: analysis.prediction === "TÀI" ? "Tài" : "Xỉu",
-          tai_percent: analysis.prediction === "TÀI" ? analysis.confidence : 100 - analysis.confidence,
-          xiu_percent: analysis.prediction === "TÀI" ? 100 - analysis.confidence : analysis.confidence,
-          confidence: analysis.confidence,
-        });
+        if (user && historyRef.current.length >= 2) {
+          const analysis = analyzePattern(historyRef.current);
+          await supabase.from("analysis_history").insert({
+            user_id: user.id,
+            game: "LC79",
+            md5_input: `Phiên #${apiResult.betting_info?.phien_cuoc ?? phienId + 1} (dự đoán)`,
+            result: analysis.prediction === "TÀI" ? "Tài" : "Xỉu",
+            tai_percent: analysis.prediction === "TÀI" ? analysis.confidence : 100 - analysis.confidence,
+            xiu_percent: analysis.prediction === "TÀI" ? 100 - analysis.confidence : analysis.confidence,
+            confidence: analysis.confidence,
+          });
+        }
       }
     } catch {
       setOnline(false);
