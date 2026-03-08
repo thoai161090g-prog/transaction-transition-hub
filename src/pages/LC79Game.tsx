@@ -141,11 +141,12 @@ export default function LC79Game() {
       
       // Only update history when new session
       if (phienId !== lastSessionRef.current) {
-        historyRef.current = [...historyRef.current, currentResult].slice(-20);
+        const newHistory = [...history, currentResult].slice(-20);
+        setHistory(newHistory);
         lastSessionRef.current = phienId;
 
-        if (user && historyRef.current.length >= 1) {
-          const analysis = analyzePattern(historyRef.current);
+        if (user && newHistory.length >= 1) {
+          const analysis = analyzePattern(newHistory);
           await supabase.from("analysis_history").insert({
             user_id: user.id,
             game: "LC79",
