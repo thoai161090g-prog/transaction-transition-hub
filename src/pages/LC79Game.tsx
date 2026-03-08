@@ -222,8 +222,8 @@ export default function LC79Game() {
   const nextSessionId = betting?.phien_cuoc ?? (phienId ? phienId + 1 : null);
 
   const prediction = (() => {
-    if (historyRef.current.length < 1) return { result: "…", percent: 0, warning: undefined as string | undefined };
-    const analysis = analyzePattern(historyRef.current);
+    if (history.length < 1) return { result: "…", percent: 0, warning: undefined as string | undefined };
+    const analysis = analyzePattern(history);
     return { result: analysis.prediction, percent: analysis.confidence, warning: analysis.warning };
   })();
 
