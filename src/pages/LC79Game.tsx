@@ -318,7 +318,7 @@ export default function LC79Game() {
                       {prediction.warning}
                     </div>
                   )}
-                  <div style={{ fontSize: 9, color: "#aaa", marginTop: 3 }}>📈 {historyRef.current.slice(-8).join(" ")}</div>
+                  <div style={{ fontSize: 9, color: "#aaa", marginTop: 3 }}>📈 {history.slice(-8).join(" ")}</div>
                 </div>
 
                 {/* History dots */}
