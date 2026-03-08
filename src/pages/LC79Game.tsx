@@ -210,17 +210,19 @@ export default function LC79Game() {
     );
   }
 
-  const latest = apiData?.list?.[0];
-  const history = apiData?.list?.slice(0, 10) ?? [];
-  const stat = apiData?.typeStat;
+  const phienId = apiData ? parseInt(apiData.phien) : null;
+  const dices = apiData ? [apiData.xuc_xac_1, apiData.xuc_xac_2, apiData.xuc_xac_3] : [];
+  const point = apiData?.tong ?? 0;
+  const resultText = apiData?.ket_qua ?? "";
+  const isTai = resultText.toLowerCase().includes("t");
+  const betting = apiData?.betting_info;
+  const nextSessionId = betting?.phien_cuoc ?? (phienId ? phienId + 1 : null);
 
   const prediction = (() => {
-    if (!apiData?.list || apiData.list.length < 3) return { result: "…", percent: 0, warning: undefined as string | undefined };
+    if (historyRef.current.length < 2) return { result: "…", percent: 0, warning: undefined as string | undefined };
     const analysis = analyzePattern(historyRef.current);
     return { result: analysis.prediction, percent: analysis.confidence, warning: analysis.warning };
   })();
-
-  const nextSessionId = latest ? latest.id + 1 : null;
 
   return (
     <div className="min-h-screen relative" style={{ background: "#000", overflow: "hidden" }}>
