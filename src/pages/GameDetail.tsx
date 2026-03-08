@@ -37,6 +37,78 @@ export default function GameDetail() {
   const game = GAMES.find((g) => g.id === id);
   const isSunwin = game?.id === "sunwin";
 
+  // Pattern analysis algorithm
+  const analyzePattern = (history: string[]): { prediction: string; confidence: number; warning?: string } => {
+    const len = history.length;
+    if (len < 2) return { prediction: history[len - 1] === "T" ? "XỈU" : "TÀI", confidence: 75 };
+
+    const last = history[len - 1];
+    let streakCount = 1;
+    for (let i = len - 2; i >= 0; i--) {
+      if (history[i] === last) streakCount++;
+      else break;
+    }
+
+    // Check 1-1 rhythm (alternating): T X T X or X T X T
+    const isAlternating = len >= 4 && history.slice(-4).every((v, i, a) => i === 0 || v !== a[i - 1]);
+    // Check 2-2 rhythm: TT XX TT XX
+    const is22 = len >= 6 && (() => {
+      const s = history.slice(-6);
+      return s[0] === s[1] && s[2] === s[3] && s[4] === s[5] && s[0] !== s[2] && s[2] !== s[4];
+    })();
+    // Check 3-3 rhythm: TTT XXX TTT
+    const is33 = len >= 9 && (() => {
+      const s = history.slice(-9);
+      return s[0] === s[1] && s[1] === s[2] && s[3] === s[4] && s[4] === s[5] && s[6] === s[7] && s[7] === s[8] && s[0] !== s[3] && s[3] !== s[6];
+    })();
+
+    let prediction: string;
+    let confidence: number;
+    let warning: string | undefined;
+
+    if (is33) {
+      // 3-3 rhythm: predict based on completing the pattern
+      const currentGroupSize = streakCount % 3;
+      if (currentGroupSize < 3 && currentGroupSize > 0) {
+        prediction = last === "T" ? "TÀI" : "XỈU"; // continue current group
+        confidence = 92 + Math.floor(Math.random() * 6);
+      } else {
+        prediction = last === "T" ? "XỈU" : "TÀI"; // switch
+        confidence = 90 + Math.floor(Math.random() * 8);
+      }
+      warning = "🔥 Nhịp 3-3 phát hiện";
+    } else if (is22) {
+      const currentGroupSize = streakCount % 2;
+      if (currentGroupSize < 2 && currentGroupSize > 0) {
+        prediction = last === "T" ? "TÀI" : "XỈU";
+        confidence = 90 + Math.floor(Math.random() * 7);
+      } else {
+        prediction = last === "T" ? "XỈU" : "TÀI";
+        confidence = 88 + Math.floor(Math.random() * 9);
+      }
+      warning = "🔥 Nhịp 2-2 phát hiện";
+    } else if (isAlternating) {
+      prediction = last === "T" ? "XỈU" : "TÀI";
+      confidence = 88 + Math.floor(Math.random() * 10);
+      warning = "🔥 Nhịp 1-1 phát hiện";
+    } else if (streakCount >= 5) {
+      // Long streak warning - reduce confidence, predict reversal
+      prediction = last === "T" ? "XỈU" : "TÀI";
+      confidence = 55 + Math.floor(Math.random() * 15);
+      warning = `⚠️ Bệt dài ${streakCount} phiên! Cẩn thận`;
+    } else if (streakCount >= 3) {
+      prediction = last === "T" ? "XỈU" : "TÀI";
+      confidence = 70 + Math.floor(Math.random() * 12);
+      warning = `⚠️ Chuỗi ${streakCount} - Có thể đổi chiều`;
+    } else {
+      // Default: follow recent trend with moderate confidence
+      prediction = last === "T" ? "TÀI" : "XỈU";
+      confidence = 78 + Math.floor(Math.random() * 12);
+    }
+
+    return { prediction, confidence, warning };
+  };
+
   // Sunwin auto-fetch
   const fetchSunwin = useCallback(async () => {
     try {
@@ -52,17 +124,33 @@ export default function GameDetail() {
       lastSessionRef.current = session;
 
       const isTai = resultVal.toString().toUpperCase().includes("T") || resultVal === "Tài";
-      const percent = Math.floor(Math.random() * (98 - 82 + 1)) + 82;
+      const currentResult = isTai ? "T" : "X";
+      
+      // Add to history
+      historyRef.current = [...historyRef.current.slice(-19), currentResult];
+      
+      // Analyze pattern to predict NEXT session
+      const analysis = analyzePattern(historyRef.current);
+      const nextSession = typeof session === "number" ? session + 1 : `${session}+1`;
 
-      setSunwinData({ session, result: isTai ? "TÀI" : "XỈU", percent });
+      setSunwinData({
+        session: nextSession,
+        result: analysis.prediction,
+        percent: analysis.confidence,
+        prediction: analysis.prediction,
+        confidence: analysis.confidence,
+        warning: analysis.warning,
+      });
       setSunwinLoading(false);
       setSunwinError(false);
 
       if (user) {
         await supabase.from("analysis_history").insert({
-          user_id: user.id, game: game.name, md5_input: `Phiên #${session}`,
-          result: isTai ? "Tài" : "Xỉu", tai_percent: isTai ? percent : 100 - percent,
-          xiu_percent: isTai ? 100 - percent : percent, confidence: percent,
+          user_id: user.id, game: game.name, md5_input: `Phiên #${nextSession} (dự đoán)`,
+          result: analysis.prediction === "TÀI" ? "Tài" : "Xỉu",
+          tai_percent: analysis.prediction === "TÀI" ? analysis.confidence : 100 - analysis.confidence,
+          xiu_percent: analysis.prediction === "TÀI" ? 100 - analysis.confidence : analysis.confidence,
+          confidence: analysis.confidence,
         });
       }
     } catch {
