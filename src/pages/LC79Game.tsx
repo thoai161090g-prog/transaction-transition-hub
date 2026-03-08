@@ -41,14 +41,13 @@ export default function LC79Game() {
   const dragState = useRef({ dragging: false, startX: 0, startY: 0, startLeft: 20, startTop: 80 });
   const [botPos, setBotPos] = useState({ x: 20, y: 80 });
   const lastSessionRef = useRef<number | null>(null);
+  const [history, setHistory] = useState<string[]>([]);
 
   const POLL_MS = 3000;
 
   useEffect(() => {
     hasActiveKey().then(setHasKey);
   }, []);
-
-  const historyRef = useRef<string[]>([]); // "T" or "X"
 
   // Pattern analysis - NO random
   const analyzePattern = (hist: string[]): { prediction: string; confidence: number; warning?: string } => {
@@ -142,11 +141,12 @@ export default function LC79Game() {
       
       // Only update history when new session
       if (phienId !== lastSessionRef.current) {
-        historyRef.current = [...historyRef.current, currentResult].slice(-20);
+        const newHistory = [...history, currentResult].slice(-20);
+        setHistory(newHistory);
         lastSessionRef.current = phienId;
 
-        if (user && historyRef.current.length >= 1) {
-          const analysis = analyzePattern(historyRef.current);
+        if (user && newHistory.length >= 1) {
+          const analysis = analyzePattern(newHistory);
           await supabase.from("analysis_history").insert({
             user_id: user.id,
             game: "LC79",
@@ -161,7 +161,7 @@ export default function LC79Game() {
     } catch {
       setOnline(false);
     }
-  }, [user]);
+  }, [user, history]);
 
   useEffect(() => {
     if (hasKey === false) {
@@ -222,8 +222,8 @@ export default function LC79Game() {
   const nextSessionId = betting?.phien_cuoc ?? (phienId ? phienId + 1 : null);
 
   const prediction = (() => {
-    if (historyRef.current.length < 1) return { result: "…", percent: 0, warning: undefined as string | undefined };
-    const analysis = analyzePattern(historyRef.current);
+    if (history.length < 1) return { result: "…", percent: 0, warning: undefined as string | undefined };
+    const analysis = analyzePattern(history);
     return { result: analysis.prediction, percent: analysis.confidence, warning: analysis.warning };
   })();
 
@@ -318,12 +318,12 @@ export default function LC79Game() {
                       {prediction.warning}
                     </div>
                   )}
-                  <div style={{ fontSize: 9, color: "#aaa", marginTop: 3 }}>📈 {historyRef.current.slice(-8).join(" ")}</div>
+                  <div style={{ fontSize: 9, color: "#aaa", marginTop: 3 }}>📈 {history.slice(-8).join(" ")}</div>
                 </div>
 
                 {/* History dots */}
                 <div className="flex gap-1 flex-wrap mt-1 pt-1.5" style={{ borderTop: "1px solid rgba(255,255,255,0.1)" }}>
-                  {historyRef.current.slice(-10).map((h, i) => (
+                  {history.slice(-10).map((h, i) => (
                     <div key={i} className="w-3 h-3 rounded-full" title={h === "T" ? "TÀI" : "XỈU"} style={{
                       background: h === "T" ? "#00ff99" : "#ff3b5c",
                       boxShadow: h === "T" ? "0 0 5px #00ff99" : "0 0 5px #ff3b5c",
