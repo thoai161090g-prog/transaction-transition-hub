@@ -101,8 +101,8 @@ export default function LC79Game() {
   const onPointerMove = (e: React.PointerEvent) => {
     if (!dragState.current.dragging) return;
     setBotPos({
-      x: Math.max(0, Math.min(window.innerWidth - 320, dragState.current.startLeft + (e.clientX - dragState.current.startX))),
-      y: Math.max(0, Math.min(window.innerHeight - 200, dragState.current.startTop + (e.clientY - dragState.current.startY))),
+      x: Math.max(0, Math.min(window.innerWidth - 230, dragState.current.startLeft + (e.clientX - dragState.current.startX))),
+      y: Math.max(0, Math.min(window.innerHeight - 190, dragState.current.startTop + (e.clientY - dragState.current.startY))),
     });
   };
   const onPointerUp = (e: React.PointerEvent) => {
@@ -189,13 +189,13 @@ export default function LC79Game() {
       {/* Robot + Chat bubble */}
       <div
         className="fixed z-[9999] flex items-center select-none"
-        style={{ left: botPos.x, top: botPos.y, touchAction: "none" }}
+        style={{ left: botPos.x, top: botPos.y, touchAction: "none", maxWidth: "calc(100vw - 8px)" }}
       >
         {/* Robot GIF */}
         <img
           src="/images/robot.gif"
           alt="Robot"
-          className="w-[75px] h-[75px] cursor-move"
+          className="w-[42px] h-[42px] cursor-move"
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
@@ -203,16 +203,16 @@ export default function LC79Game() {
 
         {/* Chat bubble */}
         {popupVisible && (
-          <div className="ml-2.5 relative" style={{
+          <div className="ml-1 relative" style={{
             background: "rgba(0,0,0,0.85)",
             color: "#fff",
-            padding: 15,
-            borderRadius: 16,
-            width: 250,
+            padding: 8,
+            borderRadius: 10,
+            width: "min(170px, calc(100vw - 78px))",
             backdropFilter: "blur(10px)",
             border: "1px solid rgba(255,255,255,0.2)",
             boxShadow: "0 0 20px rgba(0,0,0,0.6)",
-            fontSize: 14,
+            fontSize: 10,
           }}>
             {!online ? (
               <>
@@ -221,7 +221,7 @@ export default function LC79Game() {
               </>
             ) : latest ? (
               <>
-                <div className="font-bold mb-1" style={{ color: "#ffd700", fontSize: 13 }}>🤖 Robot LC79</div>
+                <div className="font-bold mb-1" style={{ color: "#ffd700", fontSize: 11 }}>🤖 Robot LC79</div>
 
                 {/* Current session */}
                 <div className="mb-2">
@@ -245,12 +245,12 @@ export default function LC79Game() {
                   <span style={{
                     color: prediction.result === "TÀI" ? "#00ff99" : "#ff3b5c",
                     fontWeight: "bold",
-                    fontSize: 20,
+                    fontSize: 15,
                   }}>
                     {prediction.result}
                   </span>
                   <br />
-                  📊 Tỷ lệ: <span style={{ color: "#ffd966", fontWeight: "bold", fontSize: 18 }}>{prediction.percent}%</span>
+                  📊 Tỷ lệ: <span style={{ color: "#ffd966", fontWeight: "bold", fontSize: 13 }}>{prediction.percent}%</span>
                 </div>
 
                 {/* History dots */}
