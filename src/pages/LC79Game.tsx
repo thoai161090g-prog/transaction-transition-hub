@@ -550,7 +550,7 @@ export default function LC79Game() {
       clearInterval(interval);
       cancelAnimationFrame(frame);
     };
-  }, [hasKey]);
+  }, [hasKey, historyLoaded]);
 
 
   if (hasKey === null) {
