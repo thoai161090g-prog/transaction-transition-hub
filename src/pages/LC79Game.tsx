@@ -510,6 +510,15 @@ export default function LC79Game() {
 
           if (newHistory.length >= 1) {
             const analysis = analyzePattern(newHistory);
+
+            // 🔊 Phát âm thanh cảnh báo
+            const hasTrap = (analysis.warning ?? "").includes("BẪY");
+            const hasPattern = (analysis.warning ?? "").includes("🔥");
+            playAlertByRisk(
+              analysis.riskLevel ?? "safe",
+              { trapDetected: hasTrap, patternFound: hasPattern }
+            );
+
             await supabase.from("analysis_history").insert({
               user_id: user.id,
               game: "LC79",
