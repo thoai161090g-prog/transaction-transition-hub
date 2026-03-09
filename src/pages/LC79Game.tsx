@@ -49,12 +49,11 @@ export default function LC79Game() {
     hasActiveKey().then(setHasKey);
   }, []);
 
-  // === THUẬT TOÁN PHÂN TÍCH NHỊP CẦU LC79 - KHÔNG RANDOM ===
-  // Dự đoán PHIÊN TIẾP THEO dựa 100% vào nhịp cầu lịch sử
-  const analyzePattern = (hist: string[]): { prediction: string; confidence: number; warning?: string } => {
+  // === THUẬT TOÁN PHÂN TÍCH NHỊP CẦU LC79 NÂNG CAO - ĐÂM SÂU VÀO GAME ===
+  const analyzePattern = (hist: string[]): { prediction: string; confidence: number; warning?: string; riskLevel?: "safe" | "caution" | "danger" | "extreme"; patternName?: string; suggestion?: string } => {
     const len = hist.length;
-    if (len < 1) return { prediction: "TÀI", confidence: 50 };
-    if (len < 2) return { prediction: hist[0] === "T" ? "XỈU" : "TÀI", confidence: 55 };
+    if (len < 1) return { prediction: "TÀI", confidence: 50, riskLevel: "safe", patternName: "Chưa đủ dữ liệu" };
+    if (len < 2) return { prediction: hist[0] === "T" ? "XỈU" : "TÀI", confidence: 55, riskLevel: "safe", patternName: "Khởi đầu" };
 
     const last = hist[len - 1];
     const opp = (v: string) => v === "T" ? "X" : "T";
@@ -70,26 +69,50 @@ export default function LC79Game() {
     streaks.push({ value: sVal, count: sCount });
     const curStreak = streaks[streaks.length - 1].count;
 
-    // --- Nhịp 1-1: T X T X T X ---
+    // --- Thống kê nâng cao ---
+    const w12 = hist.slice(-12);
+    const w8 = hist.slice(-8);
+    const w5 = hist.slice(-5);
+    const tR12 = w12.filter(h => h === "T").length / w12.length;
+    const tR8 = w8.filter(h => h === "T").length / w8.length;
+    const tR5 = w5.filter(h => h === "T").length / w5.length;
+
+    // --- Momentum: Xu hướng thay đổi gần đây ---
+    const momentum = tR5 - tR12; // Dương = TÀI đang lên, Âm = XỈU đang lên
+    const momentumStrength = Math.abs(momentum);
+
+    const avgStreak = streaks.length > 2
+      ? streaks.slice(0, -1).reduce((a, b) => a + b.count, 0) / (streaks.length - 1)
+      : 2;
+
+    // --- Nhịp 1-1 ---
+    const r1_8 = len >= 8 && hist.slice(-8).every((v, i, a) => i === 0 || v !== a[i - 1]);
     const r1_6 = len >= 6 && hist.slice(-6).every((v, i, a) => i === 0 || v !== a[i - 1]);
     const r1_4 = len >= 4 && hist.slice(-4).every((v, i, a) => i === 0 || v !== a[i - 1]);
-    const isR1 = r1_6 || r1_4;
+    const isR1 = r1_8 || r1_6 || r1_4;
 
-    // --- Nhịp 2-2: TT XX TT XX ---
+    // --- Nhịp 2-2 ---
     const isR2 = streaks.length >= 3 && (() => {
       const r = streaks.slice(-4);
       return r.length >= 3 && r.every(s => s.count === 2) &&
         r.every((s, i) => i === 0 || s.value !== r[i - 1].value);
     })();
 
-    // --- Nhịp 3-3: TTT XXX TTT ---
+    // --- Nhịp 3-3 ---
     const isR3 = streaks.length >= 2 && (() => {
       const r = streaks.slice(-3);
       return r.filter(s => s.count === 3).length >= 2 &&
         r.every((s, i) => i === 0 || s.value !== r[i - 1].value);
     })();
 
-    // --- Bệt đảo: TTTT X TTT ---
+    // --- Nhịp 4-4: TTTT XXXX TTTT ---
+    const isR4 = streaks.length >= 2 && (() => {
+      const r = streaks.slice(-3);
+      return r.filter(s => s.count === 4).length >= 2 &&
+        r.every((s, i) => i === 0 || s.value !== r[i - 1].value);
+    })();
+
+    // --- Bệt đảo ---
     const betDao = streaks.length >= 3 && (() => {
       const cur = streaks[streaks.length - 1];
       const mid = streaks[streaks.length - 2];
@@ -99,125 +122,241 @@ export default function LC79Game() {
       return { match: false, prevLen: 0 };
     })();
 
-    // --- Dị cầu: nhịp bất thường ---
-    let diCauWarn: string | null = null;
+    // --- BẪY CẦU: phát hiện khi nhịp ổn định bất ngờ bị phá ---
+    let trapDetected = false;
+    let trapWarn = "";
+    if (streaks.length >= 5) {
+      const recent5 = streaks.slice(-5);
+      const counts = recent5.map(s => s.count);
+      // Nhịp ổn định rồi bất ngờ thay đổi
+      const stable = counts.slice(0, 3);
+      const stableAvg = stable.reduce((a, b) => a + b, 0) / 3;
+      const lastTwo = counts.slice(3);
+      if (Math.abs(stable[0] - stable[1]) <= 1 && Math.abs(stable[1] - stable[2]) <= 1) {
+        if (lastTwo.some(c => Math.abs(c - stableAvg) >= 2)) {
+          trapDetected = true;
+          trapWarn = `🪤 BẪY CẦU: Nhịp ${stable.join("-")} bị phá → ${lastTwo.join("-")}`;
+        }
+      }
+    }
+
+    // --- Cầu xoắn: nhịp tăng dần hoặc giảm dần ---
+    let spiralWarn = "";
     if (streaks.length >= 4) {
       const rc = streaks.slice(-4).map(s => s.count);
       const inc = rc.every((v, i) => i === 0 || v >= rc[i - 1]);
       const dec = rc.every((v, i) => i === 0 || v <= rc[i - 1]);
-      if (inc && rc[3] >= 4) diCauWarn = "⚡ Dị cầu: Streak tăng dần - CẨN THẬN";
-      else if (dec && rc[0] >= 4) diCauWarn = "⚡ Dị cầu: Streak giảm dần";
+      if (inc && rc[3] >= 4) spiralWarn = "🌀 Cầu xoắn TĂNG: " + rc.join("→");
+      else if (dec && rc[0] >= 4) spiralWarn = "🌀 Cầu xoắn GIẢM: " + rc.join("→");
       else {
         const avg = rc.reduce((a, b) => a + b, 0) / 4;
         const vari = rc.reduce((a, b) => a + (b - avg) ** 2, 0) / 4;
-        if (vari > 3) diCauWarn = "⚡ Dị cầu: Nhịp không đều - Theo dõi sát";
+        if (vari > 3) spiralWarn = "⚡ Nhịp hỗn loạn: " + rc.join("-");
       }
     }
 
     // --- Cầu nghiêng ---
-    const w12 = hist.slice(-12);
-    const tR = w12.filter(h => h === "T").length / w12.length;
-    const cauNghieng = tR >= 0.75 ? "T" : tR <= 0.25 ? "X" : null;
+    const cauNghieng = tR12 >= 0.75 ? "T" : tR12 <= 0.25 ? "X" : null;
 
-    const avgStreak = streaks.length > 2
-      ? streaks.slice(0, -1).reduce((a, b) => a + b.count, 0) / (streaks.length - 1)
-      : 2;
+    // --- Phát hiện đảo chiều nhanh (whipsaw) ---
+    let whipsaw = false;
+    if (streaks.length >= 4) {
+      const last4 = streaks.slice(-4);
+      if (last4.every(s => s.count === 1)) {
+        whipsaw = true;
+      }
+    }
 
     let prediction: string;
     let confidence: number;
     let warning: string | undefined;
+    let riskLevel: "safe" | "caution" | "danger" | "extreme" = "safe";
+    let patternName = "";
+    let suggestion = "";
 
-    // === ƯU TIÊN: Nhịp 3-3 > 2-2 > 1-1 > Bệt đảo > Bệt dài > Cầu nghiêng > Pattern ===
+    // === ƯU TIÊN: 4-4 > 3-3 > 2-2 > 1-1 > Bệt đảo > Bệt dài > Bẫy cầu > Cầu nghiêng > Pattern ===
 
-    if (isR3) {
+    if (isR4) {
+      if (curStreak < 4) {
+        prediction = toLabel(last);
+        confidence = 90;
+        suggestion = "Theo nhịp 4-4, tiếp tục cùng chiều";
+      } else {
+        prediction = toLabel(opp(last));
+        confidence = 88;
+        suggestion = "Nhịp 4-4 đạt đỉnh, đổi chiều";
+      }
+      patternName = `Nhịp 4-4`;
+      warning = `🔥🔥 Nhịp 4-4 phát hiện (${curStreak}/4)`;
+      riskLevel = "caution";
+    } else if (isR3) {
       if (curStreak < 3) {
         prediction = toLabel(last);
         confidence = 93;
+        suggestion = "Theo nhịp 3-3, đánh cùng chiều";
       } else {
         prediction = toLabel(opp(last));
         confidence = 91;
+        suggestion = "Nhịp 3 đạt, chuẩn bị bẻ";
       }
+      patternName = `Nhịp 3-3`;
       warning = `🔥 Nhịp 3-3 phát hiện (${curStreak}/3)`;
+      riskLevel = "safe";
     } else if (isR2) {
       if (curStreak < 2) {
         prediction = toLabel(last);
         confidence = 91;
+        suggestion = "Nhịp 2-2 ổn định, theo chiều";
       } else {
         prediction = toLabel(opp(last));
         confidence = 89;
+        suggestion = "Nhịp 2 đạt, bẻ chiều";
       }
+      patternName = `Nhịp 2-2`;
       warning = `🔥 Nhịp 2-2 phát hiện (${curStreak}/2)`;
+      riskLevel = "safe";
     } else if (isR1) {
       prediction = toLabel(opp(last));
-      confidence = r1_6 ? 94 : 90;
-      warning = "🔥 Nhịp 1-1 luân phiên";
+      confidence = r1_8 ? 96 : r1_6 ? 94 : 90;
+      patternName = `Nhịp 1-1 luân phiên`;
+      warning = `🔥 Nhịp 1-1 luân phiên${r1_8 ? " (8 phiên!)" : ""}`;
+      riskLevel = "safe";
+      suggestion = "Luân phiên đều, đánh ngược phiên trước";
     } else if (betDao && typeof betDao === "object" && betDao.match) {
       const prevLen = betDao.prevLen;
       if (curStreak < prevLen) {
         prediction = toLabel(last);
         confidence = 87;
         warning = `🔄 Bệt đảo: Tiếp (${curStreak}/${prevLen})`;
+        suggestion = `Bệt đảo đang chạy, theo đến ${prevLen}`;
       } else {
         prediction = toLabel(opp(last));
         confidence = 78;
         warning = `🔄 Bệt đảo: Đạt ${curStreak} phiên - Có thể bẻ`;
+        suggestion = "Bệt đảo đạt mốc, cân nhắc bẻ";
       }
-    } else if (curStreak >= 7) {
+      patternName = "Bệt đảo";
+      riskLevel = "caution";
+    } else if (curStreak >= 8) {
+      prediction = toLabel(opp(last));
+      confidence = 55;
+      warning = `🚨🚨 BỆT SIÊU DÀI ${curStreak} phiên! CỰC KỲ NGUY HIỂM`;
+      patternName = "Bệt siêu dài";
+      riskLevel = "extreme";
+      suggestion = "DỪNG CƯỢC! Chờ bẻ cầu rõ ràng mới vào";
+    } else if (curStreak >= 6) {
       prediction = toLabel(opp(last));
       confidence = 58;
       warning = `🚨 BỆT CỰC DÀI ${curStreak} phiên! RẤT NGUY HIỂM`;
+      patternName = "Bệt cực dài";
+      riskLevel = "danger";
+      suggestion = "Hạn chế cược, chờ tín hiệu bẻ";
     } else if (curStreak >= 5) {
       const breakLikely = curStreak >= avgStreak * 1.5;
       prediction = toLabel(opp(last));
       confidence = breakLikely ? 75 : 62;
       warning = `🚨 Bệt dài ${curStreak}!${breakLikely ? " Vượt TB - Bẻ CAO" : " CẨN THẬN"}`;
+      patternName = "Bệt dài";
+      riskLevel = "danger";
+      suggestion = breakLikely ? "Vượt TB, khả năng bẻ cao" : "Cẩn thận, có thể tiếp bệt";
     } else if (curStreak === 4) {
       prediction = toLabel(opp(last));
       confidence = curStreak >= avgStreak * 1.3 ? 73 : 65;
       warning = `⚠️ Bệt ${curStreak} phiên${curStreak >= avgStreak * 1.3 ? " - Sắp bẻ" : ""}`;
+      patternName = "Bệt 4";
+      riskLevel = "caution";
+      suggestion = curStreak >= avgStreak * 1.3 ? "Gần TB bẻ, cân nhắc đánh ngược" : "Theo dõi thêm";
     } else if (curStreak === 3) {
-      // Nhịp 3-3 đang hình thành?
       if (streaks.length >= 2 && streaks[streaks.length - 2].count === 3) {
         prediction = toLabel(last);
         confidence = 80;
         warning = "🔥 Có thể hình thành nhịp 3-3";
+        patternName = "Nhịp 3-3 đang hình thành";
+        suggestion = "Nếu nhịp 3-3, tiếp cùng chiều... KHÔNG, đã đủ 3 → bẻ";
+        // Đã đủ 3 như streak trước → bẻ
+        prediction = toLabel(opp(last));
+        confidence = 82;
+        suggestion = "Nhịp 3-3: streak trước = 3, streak này = 3 → BẺ";
       } else {
         prediction = toLabel(opp(last));
         confidence = 70;
         warning = `⚠️ Chuỗi 3 - Có thể đổi chiều`;
+        patternName = "Chuỗi 3";
+        suggestion = "Chuỗi 3 thường bẻ, cân nhắc ngược";
       }
+      riskLevel = "caution";
+    } else if (trapDetected) {
+      prediction = toLabel(opp(last));
+      confidence = 65;
+      warning = trapWarn;
+      patternName = "Bẫy cầu";
+      riskLevel = "danger";
+      suggestion = "Cầu bị phá nhịp! Giảm mức cược, quan sát";
     } else if (cauNghieng) {
       prediction = toLabel(opp(cauNghieng));
       confidence = 72;
-      warning = `📐 Cầu nghiêng ${toLabel(cauNghieng)} (${Math.round((cauNghieng === "T" ? tR : 1 - tR) * 100)}%)`;
+      warning = `📐 Cầu nghiêng ${toLabel(cauNghieng)} (${Math.round((cauNghieng === "T" ? tR12 : 1 - tR12) * 100)}%)`;
+      patternName = "Cầu nghiêng";
+      riskLevel = "caution";
+      suggestion = `Cầu nghiêng nặng về ${toLabel(cauNghieng)}, đánh ngược`;
     } else {
-      // Pattern lặp + xu hướng
       if (streaks.length >= 2) {
         const prev = streaks[streaks.length - 2];
         if (prev.count === curStreak && prev.value !== last) {
           prediction = toLabel(opp(last));
           confidence = 72;
           warning = `📊 Pattern lặp ${prev.count}-${curStreak}`;
+          patternName = "Pattern lặp";
+          suggestion = "Lặp pattern, đánh theo quy luật";
         } else if (curStreak < avgStreak) {
           prediction = toLabel(last);
           confidence = 66;
+          patternName = "Chưa đạt TB";
+          suggestion = "Streak chưa đạt TB, tiếp cùng chiều";
         } else {
           prediction = toLabel(opp(last));
           confidence = 66;
+          patternName = "Đạt TB";
+          suggestion = "Đạt TB streak, cân nhắc bẻ";
         }
       } else {
         prediction = toLabel(opp(last));
         confidence = 60;
+        patternName = "Cơ bản";
+      }
+      riskLevel = whipsaw ? "caution" : "safe";
+    }
+
+    // --- Cảnh báo bổ sung ---
+    const warnings: string[] = [];
+    if (warning) warnings.push(warning);
+    if (spiralWarn) { warnings.push(spiralWarn); confidence = Math.max(55, confidence - 3); }
+    if (trapDetected && !warning?.includes("BẪY")) { warnings.push(trapWarn); confidence = Math.max(55, confidence - 5); }
+    if (whipsaw && !isR1) { warnings.push("⚡ Đảo chiều liên tục - WHIPSAW"); riskLevel = "caution"; }
+
+    // Momentum adjustment
+    if (momentumStrength > 0.3) {
+      const momDir = momentum > 0 ? "T" : "X";
+      warnings.push(`📈 Momentum mạnh: ${toLabel(momDir)} (${Math.round(momentumStrength * 100)}%)`);
+      if ((prediction === "TÀI" && momDir === "T") || (prediction === "XỈU" && momDir === "X")) {
+        confidence = Math.min(98, confidence + 3);
       }
     }
 
-    // Cảnh báo dị cầu
-    if (diCauWarn) {
-      warning = warning ? `${warning}\n${diCauWarn}` : diCauWarn;
-      confidence = Math.max(55, confidence - 5);
+    // Tỉ lệ TÀI/XỈU gần đây
+    if (len >= 8) {
+      const taiPct = Math.round(tR8 * 100);
+      warnings.push(`📊 8 phiên: TÀI ${taiPct}% | XỈU ${100 - taiPct}%`);
     }
 
-    return { prediction, confidence: Math.min(98, confidence), warning };
+    return {
+      prediction,
+      confidence: Math.min(98, confidence),
+      warning: warnings.join("\n"),
+      riskLevel,
+      patternName,
+      suggestion,
+    };
   };
 
   const fetchData = useCallback(async () => {
@@ -300,9 +439,9 @@ export default function LC79Game() {
   const nextSessionId = betting?.phien_cuoc ?? (phienId ? phienId + 1 : null);
 
   const prediction = (() => {
-    if (history.length < 1) return { result: "…", percent: 0, warning: undefined as string | undefined };
+    if (history.length < 1) return { result: "…", percent: 0, warning: undefined as string | undefined, riskLevel: "safe" as const, patternName: "", suggestion: "" };
     const analysis = analyzePattern(history);
-    return { result: analysis.prediction, percent: analysis.confidence, warning: analysis.warning };
+    return { result: analysis.prediction, percent: analysis.confidence, warning: analysis.warning, riskLevel: analysis.riskLevel ?? "safe", patternName: analysis.patternName ?? "", suggestion: analysis.suggestion ?? "" };
   })();
 
   return (
@@ -357,27 +496,65 @@ export default function LC79Game() {
               </span>
             </div>
 
+            {/* Risk Level Badge */}
+            {prediction.riskLevel && prediction.riskLevel !== "safe" && (
+              <div className="mb-2 px-2 py-1 rounded-md text-center text-[10px] font-bold" style={{
+                background: prediction.riskLevel === "extreme" ? "rgba(255,0,0,0.3)" :
+                  prediction.riskLevel === "danger" ? "rgba(255,59,92,0.25)" :
+                  "rgba(255,165,0,0.2)",
+                color: prediction.riskLevel === "extreme" ? "#ff0000" :
+                  prediction.riskLevel === "danger" ? "#ff3b5c" : "#ffa500",
+                border: `1px solid ${prediction.riskLevel === "extreme" ? "#ff0000" : prediction.riskLevel === "danger" ? "#ff3b5c" : "#ffa500"}`,
+                animation: prediction.riskLevel === "extreme" ? "pulse 0.5s infinite" : prediction.riskLevel === "danger" ? "pulse 1s infinite" : "none",
+              }}>
+                {prediction.riskLevel === "extreme" ? "🚨 CỰC KỲ NGUY HIỂM" :
+                 prediction.riskLevel === "danger" ? "⚠️ NGUY HIỂM" : "⚡ CẨN THẬN"}
+              </div>
+            )}
+
             <div className="pt-2 mb-2" style={{ borderTop: "1px solid rgba(255,255,255,0.15)" }}>
+              {prediction.patternName && (
+                <div className="mb-1" style={{ fontSize: 10, color: "#4db8ff", fontWeight: "bold" }}>
+                  🧠 {prediction.patternName}
+                </div>
+              )}
               🤖 Dự đoán phiên tiếp {nextSessionId && <span style={{ color: "#4db8ff", fontWeight: "bold" }}>#{nextSessionId}</span>}:<br />
               <span style={{
                 color: prediction.result === "TÀI" ? "#00ff99" : "#ff3b5c",
                 fontWeight: "bold",
-                fontSize: 15,
+                fontSize: 16,
+                textShadow: prediction.result === "TÀI" ? "0 0 8px rgba(0,255,153,0.5)" : "0 0 8px rgba(255,59,92,0.5)",
               }}>
                 {prediction.result}
               </span>
               <br />
-              📊 Độ tin cậy: <span style={{ color: "#ffd966", fontWeight: "bold", fontSize: 13 }}>{prediction.percent}%</span>
-              {prediction.warning && (
-                <div style={{ fontSize: 9, color: prediction.warning.includes("Bệt") ? "#ff3b5c" : "#ffd700", marginTop: 4 }}>
-                  {prediction.warning}
+              📊 Độ tin cậy: <span style={{ color: prediction.percent >= 85 ? "#00ff99" : prediction.percent >= 70 ? "#ffd966" : "#ff3b5c", fontWeight: "bold", fontSize: 13 }}>{prediction.percent}%</span>
+              
+              {/* Suggestion */}
+              {prediction.suggestion && (
+                <div style={{ fontSize: 9, color: "#4db8ff", marginTop: 4, padding: "3px 6px", background: "rgba(77,184,255,0.1)", borderRadius: 4, borderLeft: "2px solid #4db8ff" }}>
+                  💡 {prediction.suggestion}
                 </div>
               )}
-              <div style={{ fontSize: 9, color: "#aaa", marginTop: 3 }}>📈 {history.slice(-8).join(" ")}</div>
+
+              {/* Warnings */}
+              {prediction.warning && prediction.warning.split("\n").map((w, i) => (
+                <div key={i} style={{
+                  fontSize: 9,
+                  color: w.includes("🚨") || w.includes("NGUY") ? "#ff3b5c" :
+                    w.includes("🪤") || w.includes("BẪY") ? "#ff6b00" :
+                    w.includes("🔥") ? "#ffd700" :
+                    w.includes("📈") || w.includes("📊") ? "#aaa" : "#ffd700",
+                  marginTop: 3,
+                  fontWeight: w.includes("🚨") ? "bold" : "normal",
+                }}>
+                  {w}
+                </div>
+              ))}
             </div>
 
             <div className="flex gap-1 flex-wrap mt-1 pt-1.5" style={{ borderTop: "1px solid rgba(255,255,255,0.1)" }}>
-              {history.slice(-10).map((h, i) => (
+              {history.slice(-12).map((h, i) => (
                 <div key={i} className="w-3 h-3 rounded-full" title={h === "T" ? "TÀI" : "XỈU"} style={{
                   background: h === "T" ? "#00ff99" : "#ff3b5c",
                   boxShadow: h === "T" ? "0 0 5px #00ff99" : "0 0 5px #ff3b5c",
@@ -388,18 +565,32 @@ export default function LC79Game() {
             {betting && (
               <div className="text-[11px] mt-1.5" style={{ color: "#aaa" }}>
                 Cược: <span style={{ color: "#00ff99" }}>TÀI {betting.nguoi_cuoc.tai}</span> / <span style={{ color: "#ff3b5c" }}>XỈU {betting.nguoi_cuoc.xiu}</span>
+                {/* Phân tích lệch cược */}
+                {(() => {
+                  const total = betting.nguoi_cuoc.tai + betting.nguoi_cuoc.xiu;
+                  if (total > 0) {
+                    const taiPct = Math.round(betting.nguoi_cuoc.tai / total * 100);
+                    const lech = Math.abs(taiPct - 50);
+                    if (lech >= 20) {
+                      return <div style={{ fontSize: 9, color: "#ff6b00", marginTop: 2 }}>⚠️ Lệch cược {lech}% - {taiPct > 50 ? "Đông TÀI" : "Đông XỈU"}</div>;
+                    }
+                  }
+                  return null;
+                })()}
               </div>
             )}
 
             <div className="relative h-1 rounded-full overflow-hidden mt-2" style={{ background: "rgba(255,255,255,0.1)" }}>
               <div className="absolute inset-y-0 left-0 rounded-full" style={{
                 width: `${progress * 100}%`,
-                background: "linear-gradient(90deg, #ffd700, #ff8c00)",
+                background: prediction.riskLevel === "extreme" ? "linear-gradient(90deg, #ff0000, #ff3b5c)" :
+                  prediction.riskLevel === "danger" ? "linear-gradient(90deg, #ff3b5c, #ff8c00)" :
+                  "linear-gradient(90deg, #ffd700, #ff8c00)",
                 transition: "width 0.1s linear"
               }} />
             </div>
 
-            <div className="text-[10px] mt-1" style={{ color: "#666" }}>🟢 Đã đồng bộ game</div>
+            <div className="text-[10px] mt-1" style={{ color: "#666" }}>🟢 Đã đồng bộ game | 📊 {history.length} phiên</div>
           </>
         ) : null}
       </RobotBubble>
