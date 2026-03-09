@@ -532,7 +532,7 @@ export default function LC79Game() {
       navigate("/buy-key");
       return;
     }
-    if (hasKey !== true) return;
+    if (hasKey !== true || !historyLoaded) return;
 
     fetchData();
     const interval = setInterval(fetchData, POLL_MS);
