@@ -39,7 +39,6 @@ export default function LC79Game() {
   const [progress, setProgress] = useState(0);
   const [popupVisible, setPopupVisible] = useState(true);
 
-  const dragState = useRef({ dragging: false, startX: 0, startY: 0, startLeft: 20, startTop: 80 });
   const [botPos, setBotPos] = useState({ x: 20, y: 80 });
   const lastSessionRef = useRef<number | null>(null);
   const [history, setHistory] = useState<string[]>([]);
