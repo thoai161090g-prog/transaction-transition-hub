@@ -42,12 +42,38 @@ export default function LC79Game() {
   const [botPos, setBotPos] = useState({ x: 20, y: 80 });
   const lastSessionRef = useRef<number | null>(null);
   const [history, setHistory] = useState<string[]>([]);
+  const [historyLoaded, setHistoryLoaded] = useState(false);
 
   const POLL_MS = 3000;
 
   useEffect(() => {
     hasActiveKey().then(setHasKey);
   }, []);
+
+  // Load lịch sử từ DB khi mount
+  useEffect(() => {
+    if (!user) { setHistoryLoaded(true); return; }
+    const loadHistory = async () => {
+      try {
+        const { data } = await supabase
+          .from("game_history")
+          .select("phien, result")
+          .eq("user_id", user.id)
+          .eq("game", "LC79")
+          .order("created_at", { ascending: true })
+          .limit(30);
+        if (data && data.length > 0) {
+          const loaded = data.map(d => d.result);
+          setHistory(loaded.slice(-20));
+          lastSessionRef.current = data[data.length - 1].phien;
+        }
+      } catch (e) {
+        console.error("Load history error:", e);
+      }
+      setHistoryLoaded(true);
+    };
+    loadHistory();
+  }, [user]);
 
   // === THUẬT TOÁN PHÂN TÍCH NHỊP CẦU LC79 V3 - SIÊU GẮT ===
   const analyzePattern = (hist: string[]): { prediction: string; confidence: number; warning?: string; riskLevel?: "safe" | "caution" | "danger" | "extreme"; patternName?: string; suggestion?: string; streakDNA?: string; winRate?: number } => {
@@ -472,17 +498,27 @@ export default function LC79Game() {
         setHistory(newHistory);
         lastSessionRef.current = phienId;
 
-        if (user && newHistory.length >= 1) {
-          const analysis = analyzePattern(newHistory);
-          await supabase.from("analysis_history").insert({
+        // Lưu vào DB
+        if (user) {
+          await supabase.from("game_history").upsert({
             user_id: user.id,
             game: "LC79",
-            md5_input: `Phiên #${apiResult.betting_info?.phien_cuoc ?? phienId + 1} (dự đoán)`,
-            result: analysis.prediction === "TÀI" ? "Tài" : "Xỉu",
-            tai_percent: analysis.prediction === "TÀI" ? analysis.confidence : 100 - analysis.confidence,
-            xiu_percent: analysis.prediction === "TÀI" ? 100 - analysis.confidence : analysis.confidence,
-            confidence: analysis.confidence,
-          });
+            phien: phienId,
+            result: currentResult,
+          }, { onConflict: "user_id,game,phien" }).then(() => {});
+
+          if (newHistory.length >= 1) {
+            const analysis = analyzePattern(newHistory);
+            await supabase.from("analysis_history").insert({
+              user_id: user.id,
+              game: "LC79",
+              md5_input: `Phiên #${apiResult.betting_info?.phien_cuoc ?? phienId + 1} (dự đoán)`,
+              result: analysis.prediction === "TÀI" ? "Tài" : "Xỉu",
+              tai_percent: analysis.prediction === "TÀI" ? analysis.confidence : 100 - analysis.confidence,
+              xiu_percent: analysis.prediction === "TÀI" ? 100 - analysis.confidence : analysis.confidence,
+              confidence: analysis.confidence,
+            });
+          }
         }
       }
     } catch {
@@ -496,7 +532,7 @@ export default function LC79Game() {
       navigate("/buy-key");
       return;
     }
-    if (hasKey !== true) return;
+    if (hasKey !== true || !historyLoaded) return;
 
     fetchData();
     const interval = setInterval(fetchData, POLL_MS);
@@ -514,7 +550,7 @@ export default function LC79Game() {
       clearInterval(interval);
       cancelAnimationFrame(frame);
     };
-  }, [hasKey]);
+  }, [hasKey, historyLoaded]);
 
 
   if (hasKey === null) {

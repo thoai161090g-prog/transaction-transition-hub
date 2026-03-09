@@ -86,6 +86,33 @@ export type Database = {
         }
         Relationships: []
       }
+      game_history: {
+        Row: {
+          created_at: string
+          game: string
+          id: string
+          phien: number
+          result: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          game: string
+          id?: string
+          phien: number
+          result: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          game?: string
+          id?: string
+          phien?: number
+          result?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       license_keys: {
         Row: {
           created_at: string
