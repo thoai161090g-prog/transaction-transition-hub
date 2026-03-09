@@ -534,9 +534,9 @@ export default function LC79Game() {
   const nextSessionId = betting?.phien_cuoc ?? (phienId ? phienId + 1 : null);
 
   const prediction = (() => {
-    if (history.length < 1) return { result: "…", percent: 0, warning: undefined as string | undefined, riskLevel: "safe" as const, patternName: "", suggestion: "" };
+    if (history.length < 1) return { result: "…", percent: 0, warning: undefined as string | undefined, riskLevel: "safe" as const, patternName: "", suggestion: "", streakDNA: "", winRate: undefined as number | undefined };
     const analysis = analyzePattern(history);
-    return { result: analysis.prediction, percent: analysis.confidence, warning: analysis.warning, riskLevel: analysis.riskLevel ?? "safe", patternName: analysis.patternName ?? "", suggestion: analysis.suggestion ?? "" };
+    return { result: analysis.prediction, percent: analysis.confidence, warning: analysis.warning, riskLevel: analysis.riskLevel ?? "safe", patternName: analysis.patternName ?? "", suggestion: analysis.suggestion ?? "", streakDNA: analysis.streakDNA ?? "", winRate: analysis.winRate };
   })();
 
   return (
