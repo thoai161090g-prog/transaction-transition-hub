@@ -97,9 +97,39 @@ All colors MUST be HSL.
 @layer base {
   * {
     @apply border-border;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+  }
+
+  html {
+    touch-action: manipulation;
+    -webkit-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
+    overflow: hidden;
+    height: 100%;
   }
 
   body {
     @apply bg-background text-foreground;
+    overflow: auto;
+    height: 100%;
+    overscroll-behavior: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Prevent iOS zoom on input focus */
+  input, select, textarea {
+    font-size: 16px !important;
+    touch-action: manipulation;
+  }
+
+  /* Smooth scrolling for iOS */
+  .scroll-smooth {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Disable double-tap zoom */
+  button, a, [role="button"] {
+    touch-action: manipulation;
   }
 }
