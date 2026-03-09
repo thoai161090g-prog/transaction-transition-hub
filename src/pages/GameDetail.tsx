@@ -30,9 +30,7 @@ export default function GameDetail() {
   const lastSessionRef = useRef<string | number | null>(null);
   const historyRef = useRef<string[]>([]); // "T" or "X" history
 
-  // Drag state
-  const popupRef = useRef<HTMLDivElement>(null);
-  const dragState = useRef({ dragging: false, startX: 0, startY: 0, startLeft: 20, startTop: 80 });
+  // Position state
   const [popupPos, setPopupPos] = useState({ x: 20, y: 80 });
 
   const game = GAMES.find((g) => g.id === id);
