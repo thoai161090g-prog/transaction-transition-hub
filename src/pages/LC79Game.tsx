@@ -499,6 +499,14 @@ export default function LC79Game() {
         setHistory(newHistory);
         lastSessionRef.current = phienId;
 
+        // 🔊 Phát âm thanh cảnh báo (cả khi chưa login)
+        if (newHistory.length >= 2 && !user) {
+          const analysis = analyzePattern(newHistory);
+          const hasTrap = (analysis.warning ?? "").includes("BẪY");
+          const hasPattern = (analysis.warning ?? "").includes("🔥");
+          playAlertByRisk(analysis.riskLevel ?? "safe", { trapDetected: hasTrap, patternFound: hasPattern });
+        }
+
         // Lưu vào DB
         if (user) {
           await supabase.from("game_history").upsert({
