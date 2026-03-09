@@ -5,6 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { GAMES, analyzeMD5 } from "@/lib/md5-analyzer";
 import { useToast } from "@/hooks/use-toast";
 import RobotBubble from "@/components/RobotBubble";
+import { analyzePatternV3 } from "@/lib/pattern-analyzer-v3";
+import { playAlertByRisk } from "@/lib/alert-sounds";
 
 interface SunwinApiResult {
   session: string | number;
@@ -24,7 +26,7 @@ export default function GameDetail() {
   const [history, setHistory] = useState<string[]>([]);
 
   // Sunwin robot state
-  const [sunwinData, setSunwinData] = useState<SunwinApiResult & { prediction?: string; confidence?: number; warning?: string } | null>(null);
+  const [sunwinData, setSunwinData] = useState<SunwinApiResult & { prediction?: string; confidence?: number; warning?: string; riskLevel?: string; patternName?: string; suggestion?: string; streakDNA?: string } | null>(null);
   const [sunwinLoading, setSunwinLoading] = useState(true);
   const [sunwinError, setSunwinError] = useState(false);
   const lastSessionRef = useRef<string | number | null>(null);
@@ -35,77 +37,6 @@ export default function GameDetail() {
 
   const game = GAMES.find((g) => g.id === id);
   const isSunwin = game?.id === "sunwin";
-
-  // Pattern analysis algorithm
-  const analyzePattern = (history: string[]): { prediction: string; confidence: number; warning?: string } => {
-    const len = history.length;
-    if (len < 2) return { prediction: history[len - 1] === "T" ? "XỈU" : "TÀI", confidence: 75 };
-
-    const last = history[len - 1];
-    let streakCount = 1;
-    for (let i = len - 2; i >= 0; i--) {
-      if (history[i] === last) streakCount++;
-      else break;
-    }
-
-    // Check 1-1 rhythm (alternating): T X T X or X T X T
-    const isAlternating = len >= 4 && history.slice(-4).every((v, i, a) => i === 0 || v !== a[i - 1]);
-    // Check 2-2 rhythm: TT XX TT XX
-    const is22 = len >= 6 && (() => {
-      const s = history.slice(-6);
-      return s[0] === s[1] && s[2] === s[3] && s[4] === s[5] && s[0] !== s[2] && s[2] !== s[4];
-    })();
-    // Check 3-3 rhythm: TTT XXX TTT
-    const is33 = len >= 9 && (() => {
-      const s = history.slice(-9);
-      return s[0] === s[1] && s[1] === s[2] && s[3] === s[4] && s[4] === s[5] && s[6] === s[7] && s[7] === s[8] && s[0] !== s[3] && s[3] !== s[6];
-    })();
-
-    let prediction: string;
-    let confidence: number;
-    let warning: string | undefined;
-
-    if (is33) {
-      const groupPos = streakCount % 3;
-      if (groupPos > 0 && groupPos < 3) {
-        prediction = last === "T" ? "TÀI" : "XỈU";
-        confidence = 93;
-      } else {
-        prediction = last === "T" ? "XỈU" : "TÀI";
-        confidence = 91;
-      }
-      warning = "🔥 Nhịp 3-3 phát hiện";
-    } else if (is22) {
-      const groupPos = streakCount % 2;
-      if (groupPos > 0 && groupPos < 2) {
-        prediction = last === "T" ? "TÀI" : "XỈU";
-        confidence = 91;
-      } else {
-        prediction = last === "T" ? "XỈU" : "TÀI";
-        confidence = 89;
-      }
-      warning = "🔥 Nhịp 2-2 phát hiện";
-    } else if (isAlternating) {
-      prediction = last === "T" ? "XỈU" : "TÀI";
-      confidence = 90;
-      warning = "🔥 Nhịp 1-1 phát hiện";
-    } else if (streakCount >= 5) {
-      prediction = last === "T" ? "XỈU" : "TÀI";
-      confidence = 58;
-      warning = `⚠️ Bệt dài ${streakCount} phiên! Cẩn thận`;
-    } else if (streakCount >= 3) {
-      prediction = last === "T" ? "XỈU" : "TÀI";
-      confidence = 72;
-      warning = `⚠️ Chuỗi ${streakCount} - Có thể đổi chiều`;
-    } else {
-      const tCount = history.slice(-10).filter(h => h === "T").length;
-      const balance = Math.abs(tCount - (Math.min(10, len) - tCount));
-      confidence = 78 + balance * 2;
-      prediction = last === "T" ? "TÀI" : "XỈU";
-    }
-
-    return { prediction, confidence, warning };
-  };
 
   // Sunwin auto-fetch
   const fetchSunwin = useCallback(async () => {
