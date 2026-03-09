@@ -3,6 +3,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
+import RobotBubble from "@/components/RobotBubble";
 
 interface BcrTableData {
   ban: string;
@@ -27,9 +28,7 @@ export default function BCRGame() {
   const [popupVisible, setPopupVisible] = useState(true);
   const [menuOpen, setMenuOpen] = useState(false);
 
-  const dragState = useRef({ dragging: false, startX: 0, startY: 0, startLeft: 20, startTop: 80 });
   const [botPos, setBotPos] = useState({ x: 20, y: 80 });
-  const lastPhienRef = useRef<string | null>(null);
 
   const POLL_MS = 5000;
 
@@ -85,21 +84,7 @@ export default function BCRGame() {
     return () => clearInterval(interval);
   }, [hasKey, fetchData]);
 
-  const onPointerDown = (e: React.PointerEvent) => {
-    dragState.current = { dragging: true, startX: e.clientX, startY: e.clientY, startLeft: botPos.x, startTop: botPos.y };
-    (e.target as HTMLElement).setPointerCapture(e.pointerId);
-  };
-  const onPointerMove = (e: React.PointerEvent) => {
-    if (!dragState.current.dragging) return;
-    setBotPos({
-      x: Math.max(0, Math.min(window.innerWidth - 230, dragState.current.startLeft + (e.clientX - dragState.current.startX))),
-      y: Math.max(0, Math.min(window.innerHeight - 190, dragState.current.startTop + (e.clientY - dragState.current.startY))),
-    });
-  };
-  const onPointerUp = (e: React.PointerEvent) => {
-    dragState.current.dragging = false;
-    (e.target as HTMLElement).releasePointerCapture(e.pointerId);
-  };
+  const lastPhienRef = useRef<string | null>(null);
 
   if (hasKey === null) {
     return (
@@ -137,158 +122,119 @@ export default function BCRGame() {
       />
 
       {/* Robot + Chat bubble */}
-      <div
-        className="fixed z-[9999] flex items-start select-none"
-        style={{ left: botPos.x, top: botPos.y, touchAction: "none", maxWidth: "calc(100vw - 8px)" }}
+      <RobotBubble
+        robotImage="/images/robot_bcr.gif"
+        robotAlt="Robot BCR"
+        visible={popupVisible}
+        onToggle={setPopupVisible}
+        accentColor="#e0b0ff"
+        glowColor="#8000ff"
+        position={botPos}
+        onPositionChange={setBotPos}
       >
-        {/* Robot GIF */}
-        <img
-          src="/images/robot_bcr.gif"
-          alt="Robot BCR"
-          className="w-[40px] h-[40px] cursor-move rounded-full"
-          style={{ border: "2px solid #ffd700", boxShadow: "0 0 10px rgba(255,215,0,0.5)" }}
-          onPointerDown={onPointerDown}
-          onPointerMove={onPointerMove}
-          onPointerUp={onPointerUp}
-        />
+        {!online ? (
+          <>
+            <span style={{ fontWeight: "bold", color: "#e0b0ff" }}>🤖 Robot BCR</span><br />
+            <span style={{ color: "#4db8ff" }}>🔄 Đang kết nối API...</span>
+          </>
+        ) : (
+          <>
+            <div className="font-bold mb-1.5 flex items-center justify-between" style={{ color: "#e0b0ff", fontSize: 11 }}>
+              <span>🤖 SEXY BCR VIP</span>
+              <div
+                className="px-2 py-0.5 rounded text-[10px] cursor-pointer"
+                style={{ background: "rgba(255,215,0,0.2)", border: "1px solid #ffd700", color: "#ffd700" }}
+                onClick={() => setMenuOpen(!menuOpen)}
+              >
+                Bàn {selectedTable} ▾
+              </div>
+            </div>
 
-        {/* Chat bubble */}
-        {popupVisible && (
-          <div className="ml-0.5 relative" style={{
-            background: "linear-gradient(145deg, rgba(10,0,30,0.95), rgba(30,0,60,0.9))",
-            color: "#fff",
-            padding: 6,
-            borderRadius: 8,
-            width: "min(165px, calc(100vw - 76px))",
-            backdropFilter: "blur(10px)",
-            border: "1px solid rgba(180,100,255,0.3)",
-            boxShadow: "0 0 15px rgba(128,0,255,0.3)",
-            fontSize: 8.5,
-          }}>
-            {!online ? (
-              <>
-                <span style={{ fontWeight: "bold", color: "#e0b0ff" }}>🤖 Robot BCR</span><br />
-                <span style={{ color: "#4db8ff" }}>🔄 Đang kết nối API...</span>
-              </>
-            ) : (
-              <>
-                <div className="font-bold mb-1.5 flex items-center justify-between" style={{ color: "#e0b0ff", fontSize: 11 }}>
-                  <span>🤖 SEXY BCR VIP TOOL</span>
+            {/* Table selector dropdown */}
+            {menuOpen && (
+              <div className="absolute top-8 right-0 z-50 max-h-[180px] overflow-y-auto rounded-lg"
+                style={{
+                  background: "rgba(10,0,30,0.98)",
+                  border: "1px solid rgba(180,100,255,0.4)",
+                  boxShadow: "0 8px 25px rgba(0,0,0,0.8)",
+                  width: "100%",
+                }}>
+                {tables.map(t => (
                   <div
-                    className="px-2 py-0.5 rounded text-[10px] cursor-pointer"
-                    style={{ background: "rgba(255,215,0,0.2)", border: "1px solid #ffd700", color: "#ffd700" }}
-                    onClick={() => setMenuOpen(!menuOpen)}
+                    key={t.ban}
+                    className="px-3 py-1.5 cursor-pointer text-xs hover:bg-white/10 flex justify-between"
+                    style={{
+                      color: t.ban === selectedTable ? "#ffd700" : "#ccc",
+                      background: t.ban === selectedTable ? "rgba(255,215,0,0.1)" : "transparent",
+                    }}
+                    onClick={() => { setSelectedTable(t.ban); setMenuOpen(false); }}
                   >
-                    Bàn {selectedTable} ▾
+                    <span>Bàn {t.ban}</span>
+                    <span style={{ color: "#888" }}>P#{t.phien_hien_tai}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {current ? (
+              <>
+                <div className="mb-1">
+                  🎯 Phiên <span style={{ color: "#4db8ff", fontWeight: "bold" }}>#{current.phien_hien_tai}</span>
+                  <span className="ml-1 text-[9px]" style={{ color: "#888" }}>{current.time}</span>
+                </div>
+
+                <div className="mb-0.5 text-[10px]" style={{ color: "#aaa" }}>
+                  📊 P#{current.phien}: {
+                    current.ket_qua.slice(-1) === "B" ? <span style={{ color: "#ff3b5c" }}>Banker</span>
+                    : current.ket_qua.slice(-1) === "P" ? <span style={{ color: "#4d8bff" }}>Player</span>
+                    : <span style={{ color: "#00ff99" }}>Tie</span>
+                  }
+                </div>
+
+                {current.cau && (
+                  <div className="text-[10px] mb-1" style={{ color: "#e0b0ff" }}>
+                    🔮 Cầu: {current.cau}
+                  </div>
+                )}
+
+                <div className="pt-1 mb-1" style={{ borderTop: "1px solid rgba(255,255,255,0.1)" }}>
+                  🤖 Dự đoán:<br />
+                  <span style={{
+                    color: isPlayer ? "#4d8bff" : "#ff3b5c",
+                    fontWeight: "bold",
+                    fontSize: 16,
+                    textShadow: isPlayer ? "0 0 8px rgba(77,139,255,0.6)" : "0 0 8px rgba(255,59,92,0.6)",
+                  }}>
+                    {current.du_doan}
+                  </span>
+                  <div className="mt-0.5">
+                    📊 Tin cậy: <span style={{ color: "#ffd966", fontWeight: "bold", fontSize: 13 }}>{current.do_tin_cay}</span>
+                  </div>
+                  <div className="text-[9px]" style={{ color: "#888" }}>
+                    ⚙️ {current.thuat_toan}
                   </div>
                 </div>
 
-                {/* Table selector dropdown */}
-                {menuOpen && (
-                  <div className="absolute top-8 right-0 z-50 max-h-[180px] overflow-y-auto rounded-lg"
-                    style={{
-                      background: "rgba(10,0,30,0.98)",
-                      border: "1px solid rgba(180,100,255,0.4)",
-                      boxShadow: "0 8px 25px rgba(0,0,0,0.8)",
-                      width: "100%",
+                <div className="flex gap-0.5 flex-wrap mt-1 pt-1" style={{ borderTop: "1px solid rgba(255,255,255,0.1)" }}>
+                  {resultDots.map((c, i) => (
+                    <div key={i} className="w-2.5 h-2.5 rounded-full text-[6px] flex items-center justify-center font-bold" style={{
+                      background: c === "B" ? "#ff3b5c" : c === "P" ? "#4d8bff" : "#00ff99",
+                      boxShadow: c === "B" ? "0 0 3px #ff3b5c" : c === "P" ? "0 0 3px #4d8bff" : "0 0 3px #00ff99",
+                      color: "#fff",
                     }}>
-                    {tables.map(t => (
-                      <div
-                        key={t.ban}
-                        className="px-3 py-1.5 cursor-pointer text-xs hover:bg-white/10 flex justify-between"
-                        style={{
-                          color: t.ban === selectedTable ? "#ffd700" : "#ccc",
-                          background: t.ban === selectedTable ? "rgba(255,215,0,0.1)" : "transparent",
-                        }}
-                        onClick={() => { setSelectedTable(t.ban); setMenuOpen(false); }}
-                      >
-                        <span>Bàn {t.ban}</span>
-                        <span style={{ color: "#888" }}>P#{t.phien_hien_tai}</span>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {current ? (
-                  <>
-                    <div className="mb-1">
-                      🎯 Phiên <span style={{ color: "#4db8ff", fontWeight: "bold" }}>#{current.phien_hien_tai}</span>
-                      <span className="ml-1 text-[9px]" style={{ color: "#888" }}>{current.time}</span>
+                      {c}
                     </div>
-
-                    {/* Last result */}
-                    <div className="mb-0.5 text-[10px]" style={{ color: "#aaa" }}>
-                      📊 P#{current.phien}: {
-                        current.ket_qua.slice(-1) === "B" ? <span style={{ color: "#ff3b5c" }}>Banker</span>
-                        : current.ket_qua.slice(-1) === "P" ? <span style={{ color: "#4d8bff" }}>Player</span>
-                        : <span style={{ color: "#00ff99" }}>Tie</span>
-                      }
-                    </div>
-
-                    {current.cau && (
-                      <div className="text-[10px] mb-1" style={{ color: "#e0b0ff" }}>
-                        🔮 Cầu: {current.cau}
-                      </div>
-                    )}
-
-                    {/* Prediction */}
-                    <div className="pt-1 mb-1" style={{ borderTop: "1px solid rgba(255,255,255,0.1)" }}>
-                      🤖 Dự đoán:<br />
-                      <span style={{
-                        color: isPlayer ? "#4d8bff" : "#ff3b5c",
-                        fontWeight: "bold",
-                        fontSize: 16,
-                        textShadow: isPlayer ? "0 0 8px rgba(77,139,255,0.6)" : "0 0 8px rgba(255,59,92,0.6)",
-                      }}>
-                        {current.du_doan}
-                      </span>
-                      <div className="mt-0.5">
-                        📊 Tin cậy: <span style={{ color: "#ffd966", fontWeight: "bold", fontSize: 13 }}>{current.do_tin_cay}</span>
-                      </div>
-                      <div className="text-[9px]" style={{ color: "#888" }}>
-                        ⚙️ {current.thuat_toan}
-                      </div>
-                    </div>
-
-                    {/* History dots */}
-                    <div className="flex gap-0.5 flex-wrap mt-1 pt-1" style={{ borderTop: "1px solid rgba(255,255,255,0.1)" }}>
-                      {resultDots.map((c, i) => (
-                        <div key={i} className="w-2.5 h-2.5 rounded-full text-[6px] flex items-center justify-center font-bold" style={{
-                          background: c === "B" ? "#ff3b5c" : c === "P" ? "#4d8bff" : "#00ff99",
-                          boxShadow: c === "B" ? "0 0 3px #ff3b5c" : c === "P" ? "0 0 3px #4d8bff" : "0 0 3px #00ff99",
-                          color: "#fff",
-                        }}>
-                          {c}
-                        </div>
-                      ))}
-                    </div>
-                  </>
-                ) : (
-                  <div style={{ color: "#aaa", fontSize: 10 }}>Chọn bàn để xem dự đoán</div>
-                )}
-
-                <div className="text-[9px] mt-1" style={{ color: "#666" }}>🟢 Đã đồng bộ game</div>
+                  ))}
+                </div>
               </>
+            ) : (
+              <div style={{ color: "#aaa", fontSize: 10 }}>Chọn bàn để xem dự đoán</div>
             )}
 
-            {/* Close */}
-            <div
-              className="absolute top-1 right-2 cursor-pointer text-xs"
-              style={{ color: "rgba(255,255,255,0.4)" }}
-              onClick={() => setPopupVisible(false)}
-            >✕</div>
-          </div>
+            <div className="text-[9px] mt-1" style={{ color: "#666" }}>🟢 Đã đồng bộ game</div>
+          </>
         )}
-
-        {/* Reopen button */}
-        {!popupVisible && (
-          <div
-            onClick={() => setPopupVisible(true)}
-            className="ml-2 w-8 h-8 rounded-full flex items-center justify-center cursor-pointer text-sm"
-            style={{ background: "rgba(0,0,0,0.8)", border: "1px solid #e0b0ff", color: "#e0b0ff" }}
-          >💬</div>
-        )}
-      </div>
+      </RobotBubble>
     </div>
   );
 }

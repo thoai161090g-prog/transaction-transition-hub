@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { GAMES, analyzeMD5 } from "@/lib/md5-analyzer";
 import { useToast } from "@/hooks/use-toast";
+import RobotBubble from "@/components/RobotBubble";
 
 interface SunwinApiResult {
   session: string | number;
@@ -29,9 +30,7 @@ export default function GameDetail() {
   const lastSessionRef = useRef<string | number | null>(null);
   const historyRef = useRef<string[]>([]); // "T" or "X" history
 
-  // Drag state
-  const popupRef = useRef<HTMLDivElement>(null);
-  const dragState = useRef({ dragging: false, startX: 0, startY: 0, startLeft: 20, startTop: 80 });
+  // Position state
   const [popupPos, setPopupPos] = useState({ x: 20, y: 80 });
 
   const game = GAMES.find((g) => g.id === id);
@@ -178,21 +177,6 @@ export default function GameDetail() {
 
   if (!game) return <div className="min-h-screen flex items-center justify-center text-white">Game không tồn tại</div>;
 
-  const onPointerDown = (e: React.PointerEvent) => {
-    dragState.current = { dragging: true, startX: e.clientX, startY: e.clientY, startLeft: popupPos.x, startTop: popupPos.y };
-    (e.target as HTMLElement).setPointerCapture(e.pointerId);
-  };
-  const onPointerMove = (e: React.PointerEvent) => {
-    if (!dragState.current.dragging) return;
-    setPopupPos({
-      x: Math.max(0, Math.min(window.innerWidth - 230, dragState.current.startLeft + (e.clientX - dragState.current.startX))),
-      y: Math.max(0, Math.min(window.innerHeight - 190, dragState.current.startTop + (e.clientY - dragState.current.startY))),
-    });
-  };
-  const onPointerUp = (e: React.PointerEvent) => {
-    dragState.current.dragging = false;
-    (e.target as HTMLElement).releasePointerCapture(e.pointerId);
-  };
 
   const handleAnalyze = async () => {
     if (!md5Input.trim()) {
@@ -252,83 +236,49 @@ export default function GameDetail() {
         />
 
         {/* Robot + Chat bubble */}
-        <div
-          className="fixed z-[9999] flex items-center select-none"
-          style={{ left: popupPos.x, top: popupPos.y, touchAction: "none", maxWidth: "calc(100vw - 8px)" }}
+        <RobotBubble
+          robotImage="/images/robot.gif"
+          robotAlt="Robot Sunwin"
+          visible={popupVisible}
+          onToggle={setPopupVisible}
+          accentColor="#ffd700"
+          glowColor="#ff8c00"
+          position={popupPos}
+          onPositionChange={setPopupPos}
         >
-          {/* Robot GIF */}
-          <img
-            src="/images/robot.gif"
-            alt="Robot"
-            className="w-[42px] h-[42px] cursor-move"
-            onPointerDown={onPointerDown}
-            onPointerMove={onPointerMove}
-            onPointerUp={onPointerUp}
-          />
-
-          {/* Chat bubble */}
-          {popupVisible && (
-            <div className="ml-1" style={{
-              background: "rgba(0,0,0,0.85)",
-              color: "#fff",
-              padding: 8,
-              borderRadius: 10,
-              width: "min(170px, calc(100vw - 78px))",
-              backdropFilter: "blur(10px)",
-              border: "1px solid rgba(255,255,255,0.2)",
-              boxShadow: "0 0 20px rgba(0,0,0,0.6)",
-              fontSize: 10,
-            }}>
-              {sunwinLoading ? (
-                <>
-                  <span>🤖 Robot SUNWIN</span><br />
-                  <span style={{ color: "#4db8ff" }}>🔄 Đang kết nối API...</span>
-                </>
-              ) : sunwinError ? (
-                <>
-                  <span>🤖 Robot SUNWIN</span><br />
-                  <span style={{ color: "#ff3b5c" }}>🔴 Không lấy được dữ liệu</span>
-                  <div style={{ fontSize: 12, color: "#aaa", marginTop: 6 }}>Kiểm tra lại API</div>
-                </>
-              ) : sunwinData ? (
-                <>
-                  🎯 Phiên tiếp: <span style={{ color: "#4db8ff", fontWeight: "bold" }}>{sunwinData.session}</span><br /><br />
-                  🤖 Dự đoán:<br />
-                  <span style={{
-                    color: sunwinData.result === "TÀI" ? "#00ff99" : "#ff3b5c",
-                    fontWeight: "bold",
-                    fontSize: 14,
-                  }}>
-                    {sunwinData.result}
-                  </span><br /><br />
-                  📊 Độ tin cậy: <span style={{ color: "#ffd966", fontWeight: "bold", fontSize: 13 }}>{sunwinData.percent}%</span>
-                  {sunwinData.warning && (
-                    <div style={{ fontSize: 9, color: sunwinData.warning.includes("Bệt") ? "#ff3b5c" : "#ffd700", marginTop: 4 }}>
-                      {sunwinData.warning}
-                    </div>
-                  )}
-                  <div style={{ fontSize: 9, color: "#aaa", marginTop: 4 }}>📈 Lịch sử: {historyRef.current.slice(-8).join(" ")}</div>
-                </>
-              ) : null}
-
-              {/* Close */}
-              <div
-                className="absolute top-1 right-2 cursor-pointer text-xs"
-                style={{ color: "rgba(255,255,255,0.4)" }}
-                onClick={() => setPopupVisible(false)}
-              >✕</div>
-            </div>
-          )}
-
-          {/* Reopen button when closed */}
-          {!popupVisible && (
-            <div
-              onClick={() => setPopupVisible(true)}
-              className="ml-2 w-8 h-8 rounded-full flex items-center justify-center cursor-pointer text-sm"
-              style={{ background: "rgba(0,0,0,0.8)", border: "1px solid #ffd700", color: "#ffd700" }}
-            >💬</div>
-          )}
-        </div>
+          {sunwinLoading ? (
+            <>
+              <span className="font-bold" style={{ color: "#ffd700" }}>🤖 Robot SUNWIN</span><br />
+              <span style={{ color: "#4db8ff" }}>🔄 Đang kết nối API...</span>
+            </>
+          ) : sunwinError ? (
+            <>
+              <span className="font-bold" style={{ color: "#ffd700" }}>🤖 Robot SUNWIN</span><br />
+              <span style={{ color: "#ff3b5c" }}>🔴 Không lấy được dữ liệu</span>
+              <div style={{ fontSize: 12, color: "#aaa", marginTop: 6 }}>Kiểm tra lại API</div>
+            </>
+          ) : sunwinData ? (
+            <>
+              <div className="font-bold mb-1" style={{ color: "#ffd700", fontSize: 11 }}>🤖 Robot SUNWIN</div>
+              🎯 Phiên tiếp: <span style={{ color: "#4db8ff", fontWeight: "bold" }}>{sunwinData.session}</span><br /><br />
+              🤖 Dự đoán:<br />
+              <span style={{
+                color: sunwinData.result === "TÀI" ? "#00ff99" : "#ff3b5c",
+                fontWeight: "bold",
+                fontSize: 14,
+              }}>
+                {sunwinData.result}
+              </span><br /><br />
+              📊 Độ tin cậy: <span style={{ color: "#ffd966", fontWeight: "bold", fontSize: 13 }}>{sunwinData.percent}%</span>
+              {sunwinData.warning && (
+                <div style={{ fontSize: 9, color: sunwinData.warning.includes("Bệt") ? "#ff3b5c" : "#ffd700", marginTop: 4 }}>
+                  {sunwinData.warning}
+                </div>
+              )}
+              <div style={{ fontSize: 9, color: "#aaa", marginTop: 4 }}>📈 Lịch sử: {historyRef.current.slice(-8).join(" ")}</div>
+            </>
+          ) : null}
+        </RobotBubble>
       </div>
     );
   }
@@ -345,81 +295,67 @@ export default function GameDetail() {
         ← Trang chủ
       </div>
 
-      {/* Open tool button */}
-      {!popupVisible && (
-        <div onClick={() => setPopupVisible(true)}
-          className="fixed bottom-5 right-5 z-[99] w-[50px] h-[50px] rounded-full flex items-center justify-center cursor-pointer"
-          style={{ background: "#000", border: "2px solid #ffd700", color: "#ffd700", fontSize: 20, fontWeight: "bold", boxShadow: "0 0 15px #ffd700" }}>
-          🤖
-        </div>
-      )}
-
-      {/* Draggable Popup Tool */}
-      {popupVisible && (
-        <div ref={popupRef} className="fixed z-[1000] select-none" style={{
-          left: popupPos.x, top: popupPos.y, width: 280,
-          background: "rgba(10, 10, 10, 0.65)", backdropFilter: "blur(20px)", WebkitBackdropFilter: "blur(20px)",
-          borderRadius: 20, padding: 20, border: "1px solid rgba(255,255,255,0.1)",
-          boxShadow: "0 20px 50px rgba(0,0,0,0.5)", touchAction: "none",
+      {/* MD5 Tool - using RobotBubble wrapper */}
+      <RobotBubble
+        robotImage={game.image || "/images/robot.gif"}
+        robotAlt={game.name}
+        visible={popupVisible}
+        onToggle={setPopupVisible}
+        accentColor="#ffd700"
+        glowColor="#00ff99"
+        position={popupPos}
+        onPositionChange={setPopupPos}
+        bubbleWidth="min(260px, calc(100vw - 76px))"
+      >
+        <div className="font-bold mb-2" style={{
+          fontFamily: "Orbitron, sans-serif",
+          fontSize: 11,
+          background: "linear-gradient(to right, #fff, #ffd700)",
+          WebkitBackgroundClip: "text",
+          WebkitTextFillColor: "transparent",
         }}>
-          <div className="absolute -inset-[2px] rounded-[22px] -z-[1] opacity-70" style={{
-            background: "linear-gradient(45deg, #ff0055, #00ff99, #00ccff, #ff0055)",
-            filter: "blur(10px)", animation: "glowing 6s linear infinite",
-          }} />
-
-          <div className="flex justify-between items-center mb-4 cursor-move"
-            onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp}>
-            <span className="font-black text-sm" style={{
-              fontFamily: "Orbitron, sans-serif",
-              background: "linear-gradient(to right, #fff, #ffd700)",
-              WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
-            }}>
-              {game.icon} VĂN MINH VIP ⚡
-            </span>
-            <span className="cursor-pointer font-bold" style={{ color: "rgba(255,255,255,0.5)" }}
-              onClick={() => setPopupVisible(false)}>✕</span>
-          </div>
-
-          <input type="text" placeholder="DÁN MÃ MD5 VÀO ĐÂY..."
-            value={md5Input} onChange={(e) => setMd5Input(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleAnalyze()}
-            className="w-full p-3 text-center text-[11px] tracking-wider outline-none"
-            style={{ borderRadius: 12, border: "1px solid rgba(255,255,255,0.2)", background: "rgba(0,0,0,0.5)", color: "#00ff99", fontFamily: "Orbitron, sans-serif" }}
-          />
-
-          <button onClick={handleAnalyze} disabled={loading}
-            className="w-full mt-3 py-3.5 border-none cursor-pointer uppercase relative overflow-hidden disabled:opacity-60"
-            style={{ borderRadius: 15, background: "linear-gradient(90deg, #ffd700, #ff8c00)", color: "#000", fontFamily: "Orbitron, sans-serif", fontWeight: 900, fontSize: 12, boxShadow: "0 5px 15px rgba(255,140,0,0.4)" }}>
-            {loading ? "ĐANG QUÉT..." : "BẮT ĐẦU QUÉT AI"}
-            {!loading && <div className="absolute top-0 -left-full w-full h-full" style={{ background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent)", animation: "shine 3s infinite" }} />}
-          </button>
-
-          {loading && <div className="mx-auto mt-2.5 w-5 h-5 rounded-full" style={{ border: "3px solid rgba(255,255,255,0.3)", borderTopColor: "#00ff99", animation: "spin 1s linear infinite" }} />}
-
-          {result && (
-            <div className="mt-4 text-center" style={{ animation: "popIn 0.5s cubic-bezier(0.175,0.885,0.32,1.275)" }}>
-              <div className="text-[48px] font-black tracking-wider" style={{
-                fontFamily: "Orbitron, sans-serif",
-                color: result.result === "Tài" ? "#00ff99" : "#ff0055",
-                textShadow: result.result === "Tài" ? "0 0 20px rgba(0,255,153,0.8)" : "0 0 20px rgba(255,0,85,0.8)",
-              }}>
-                {result.result.toUpperCase()}
-              </div>
-              <div className="text-[10px] uppercase tracking-wider mt-1" style={{ color: "#00ffff" }}>
-                ĐỘ CHÍNH XÁC: {result.confidence}%
-              </div>
-              <div className="flex justify-center gap-1.5 mt-2.5 pt-2.5" style={{ borderTop: "1px solid rgba(255,255,255,0.1)" }}>
-                {history.map((h, i) => (
-                  <div key={i} className="w-3 h-3 rounded-full" style={{
-                    background: h === "T" ? "#00ff99" : "#ff0055",
-                    boxShadow: h === "T" ? "0 0 5px #00ff99" : "0 0 5px #ff0055",
-                  }} />
-                ))}
-              </div>
-            </div>
-          )}
+          {game.icon} VĂN MINH VIP ⚡
         </div>
-      )}
+
+        <input type="text" placeholder="DÁN MÃ MD5 VÀO ĐÂY..."
+          value={md5Input} onChange={(e) => setMd5Input(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && handleAnalyze()}
+          className="w-full p-2.5 text-center text-[10px] tracking-wider outline-none"
+          style={{ borderRadius: 10, border: "1px solid rgba(255,255,255,0.2)", background: "rgba(0,0,0,0.5)", color: "#00ff99", fontFamily: "Orbitron, sans-serif" }}
+        />
+
+        <button onClick={handleAnalyze} disabled={loading}
+          className="w-full mt-2 py-2.5 border-none cursor-pointer uppercase relative overflow-hidden disabled:opacity-60"
+          style={{ borderRadius: 12, background: "linear-gradient(90deg, #ffd700, #ff8c00)", color: "#000", fontFamily: "Orbitron, sans-serif", fontWeight: 900, fontSize: 11, boxShadow: "0 5px 15px rgba(255,140,0,0.4)" }}>
+          {loading ? "ĐANG QUÉT..." : "BẮT ĐẦU QUÉT AI"}
+          {!loading && <div className="absolute top-0 -left-full w-full h-full" style={{ background: "linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent)", animation: "shine 3s infinite" }} />}
+        </button>
+
+        {loading && <div className="mx-auto mt-2 w-4 h-4 rounded-full" style={{ border: "3px solid rgba(255,255,255,0.3)", borderTopColor: "#00ff99", animation: "spin 1s linear infinite" }} />}
+
+        {result && (
+          <div className="mt-3 text-center" style={{ animation: "popIn 0.5s cubic-bezier(0.175,0.885,0.32,1.275)" }}>
+            <div className="text-[36px] font-black tracking-wider" style={{
+              fontFamily: "Orbitron, sans-serif",
+              color: result.result === "Tài" ? "#00ff99" : "#ff0055",
+              textShadow: result.result === "Tài" ? "0 0 20px rgba(0,255,153,0.8)" : "0 0 20px rgba(255,0,85,0.8)",
+            }}>
+              {result.result.toUpperCase()}
+            </div>
+            <div className="text-[9px] uppercase tracking-wider mt-1" style={{ color: "#00ffff" }}>
+              ĐỘ CHÍNH XÁC: {result.confidence}%
+            </div>
+            <div className="flex justify-center gap-1 mt-2 pt-2" style={{ borderTop: "1px solid rgba(255,255,255,0.1)" }}>
+              {history.map((h, i) => (
+                <div key={i} className="w-2.5 h-2.5 rounded-full" style={{
+                  background: h === "T" ? "#00ff99" : "#ff0055",
+                  boxShadow: h === "T" ? "0 0 5px #00ff99" : "0 0 5px #ff0055",
+                }} />
+              ))}
+            </div>
+          </div>
+        )}
+      </RobotBubble>
 
       {/* Background */}
       <div className="absolute inset-0" style={{ background: "radial-gradient(circle at 50% 50%, #201a00 0%, #000 100%)" }}>
@@ -430,7 +366,6 @@ export default function GameDetail() {
       </div>
 
       <style>{`
-        @keyframes glowing { 0% { filter: hue-rotate(0deg); } 100% { filter: hue-rotate(360deg); } }
         @keyframes shine { 100% { left: 100%; } }
         @keyframes popIn { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
         @keyframes spin { 100% { transform: rotate(360deg); } }
