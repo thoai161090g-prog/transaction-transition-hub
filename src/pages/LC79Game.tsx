@@ -42,12 +42,38 @@ export default function LC79Game() {
   const [botPos, setBotPos] = useState({ x: 20, y: 80 });
   const lastSessionRef = useRef<number | null>(null);
   const [history, setHistory] = useState<string[]>([]);
+  const [historyLoaded, setHistoryLoaded] = useState(false);
 
   const POLL_MS = 3000;
 
   useEffect(() => {
     hasActiveKey().then(setHasKey);
   }, []);
+
+  // Load lịch sử từ DB khi mount
+  useEffect(() => {
+    if (!user) { setHistoryLoaded(true); return; }
+    const loadHistory = async () => {
+      try {
+        const { data } = await supabase
+          .from("game_history")
+          .select("phien, result")
+          .eq("user_id", user.id)
+          .eq("game", "LC79")
+          .order("created_at", { ascending: true })
+          .limit(30);
+        if (data && data.length > 0) {
+          const loaded = data.map(d => d.result);
+          setHistory(loaded.slice(-20));
+          lastSessionRef.current = data[data.length - 1].phien;
+        }
+      } catch (e) {
+        console.error("Load history error:", e);
+      }
+      setHistoryLoaded(true);
+    };
+    loadHistory();
+  }, [user]);
 
   // === THUẬT TOÁN PHÂN TÍCH NHỊP CẦU LC79 V3 - SIÊU GẮT ===
   const analyzePattern = (hist: string[]): { prediction: string; confidence: number; warning?: string; riskLevel?: "safe" | "caution" | "danger" | "extreme"; patternName?: string; suggestion?: string; streakDNA?: string; winRate?: number } => {
