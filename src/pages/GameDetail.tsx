@@ -177,21 +177,6 @@ export default function GameDetail() {
 
   if (!game) return <div className="min-h-screen flex items-center justify-center text-white">Game không tồn tại</div>;
 
-  const onPointerDown = (e: React.PointerEvent) => {
-    dragState.current = { dragging: true, startX: e.clientX, startY: e.clientY, startLeft: popupPos.x, startTop: popupPos.y };
-    (e.target as HTMLElement).setPointerCapture(e.pointerId);
-  };
-  const onPointerMove = (e: React.PointerEvent) => {
-    if (!dragState.current.dragging) return;
-    setPopupPos({
-      x: Math.max(0, Math.min(window.innerWidth - 230, dragState.current.startLeft + (e.clientX - dragState.current.startX))),
-      y: Math.max(0, Math.min(window.innerHeight - 190, dragState.current.startTop + (e.clientY - dragState.current.startY))),
-    });
-  };
-  const onPointerUp = (e: React.PointerEvent) => {
-    dragState.current.dragging = false;
-    (e.target as HTMLElement).releasePointerCapture(e.pointerId);
-  };
 
   const handleAnalyze = async () => {
     if (!md5Input.trim()) {
