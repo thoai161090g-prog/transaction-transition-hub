@@ -4,6 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import RobotBubble from "@/components/RobotBubble";
+import { analyzePatternV3 } from "@/lib/pattern-analyzer-v3";
+import { playAlertByRisk } from "@/lib/alert-sounds";
 
 interface BcrTableData {
   ban: string;
@@ -29,12 +31,47 @@ export default function BCRGame() {
   const [menuOpen, setMenuOpen] = useState(false);
 
   const [botPos, setBotPos] = useState({ x: 20, y: 80 });
+  const lastPhienRef = useRef<string | null>(null);
+  
+  // V3 Algorithm state - lưu lịch sử cho mỗi bàn
+  const historyMapRef = useRef<Record<string, string[]>>({});
+  const [v3Analysis, setV3Analysis] = useState<ReturnType<typeof analyzePatternV3> | null>(null);
 
-  const POLL_MS = 5000;
+  const POLL_MS = 3000;
 
   useEffect(() => {
     hasActiveKey().then(setHasKey);
   }, []);
+
+  // Load lịch sử từ DB khi mount
+  useEffect(() => {
+    if (!user) return;
+    const loadHistory = async () => {
+      try {
+        const { data } = await supabase
+          .from("game_history")
+          .select("phien, result")
+          .eq("user_id", user.id)
+          .eq("game", "BCR")
+          .order("created_at", { ascending: true })
+          .limit(30);
+        if (data && data.length > 0) {
+          // Parse phien để lấy bàn: "B1-123" → "B1"
+          data.forEach(d => {
+            const banMatch = String(d.phien).match(/^(\d+)-/);
+            if (banMatch) {
+              const ban = banMatch[1];
+              if (!historyMapRef.current[ban]) historyMapRef.current[ban] = [];
+              historyMapRef.current[ban].push(d.result);
+            }
+          });
+        }
+      } catch (e) {
+        console.error("Load BCR history error:", e);
+      }
+    };
+    loadHistory();
+  }, [user]);
 
   const fetchData = useCallback(async () => {
     try {
@@ -47,23 +84,58 @@ export default function BCRGame() {
         setSelectedTable(arr[0].ban);
       }
 
-      // Save to history if new session on selected table
+      // Process current table for V3 analysis
       const current = arr.find(t => t.ban === (selectedTable || arr[0]?.ban));
-      if (current && user) {
+      if (current) {
         const key = `${current.ban}-${current.phien_hien_tai}`;
+        
         if (key !== lastPhienRef.current) {
           lastPhienRef.current = key;
-          const isPlayer = current.du_doan.includes("Con");
-          const conf = parseFloat(current.do_tin_cay) || 90;
-          await supabase.from("analysis_history").insert({
-            user_id: user.id,
-            game: "BCR",
-            md5_input: `Bàn ${current.ban} - Phiên #${current.phien_hien_tai}`,
-            result: isPlayer ? "Player" : "Banker",
-            tai_percent: isPlayer ? conf : 100 - conf,
-            xiu_percent: isPlayer ? 100 - conf : conf,
-            confidence: conf,
-          });
+          
+          // Parse last result from ket_qua: B=Banker, P=Player, T=Tie
+          const lastChar = current.ket_qua.slice(-1);
+          if (lastChar === "B" || lastChar === "P") {
+            // Initialize history for this table if needed
+            if (!historyMapRef.current[current.ban]) {
+              historyMapRef.current[current.ban] = [];
+            }
+            
+            // Add to history (skip Tie for analysis)
+            const newHistory = [...historyMapRef.current[current.ban], lastChar].slice(-20);
+            historyMapRef.current[current.ban] = newHistory;
+            
+            // Run V3 Analysis
+            const analysis = analyzePatternV3(newHistory, "baccarat");
+            setV3Analysis(analysis);
+            
+            // Play alert sounds
+            const hasTrap = (analysis.warning ?? "").includes("BẪY");
+            const hasPattern = (analysis.warning ?? "").includes("🔥");
+            playAlertByRisk(analysis.riskLevel ?? "safe", { trapDetected: hasTrap, patternFound: hasPattern });
+            
+            // Save to DB
+            if (user) {
+              // Save to game_history for persistence
+              const phienKey = parseInt(`${current.ban.replace(/\D/g, "")}${current.phien_hien_tai}`);
+              await supabase.from("game_history").upsert({
+                user_id: user.id,
+                game: "BCR",
+                phien: phienKey,
+                result: lastChar,
+              }, { onConflict: "user_id,game,phien" });
+              
+              // Save analysis
+              await supabase.from("analysis_history").insert({
+                user_id: user.id,
+                game: "BCR",
+                md5_input: `Bàn ${current.ban} - Phiên #${current.phien_hien_tai + 1} (V3)`,
+                result: analysis.prediction === "BANKER" ? "Banker" : "Player",
+                tai_percent: analysis.prediction === "BANKER" ? analysis.confidence : 100 - analysis.confidence,
+                xiu_percent: analysis.prediction === "BANKER" ? 100 - analysis.confidence : analysis.confidence,
+                confidence: analysis.confidence,
+              });
+            }
+          }
         }
       }
     } catch {
@@ -84,8 +156,6 @@ export default function BCRGame() {
     return () => clearInterval(interval);
   }, [hasKey, fetchData]);
 
-  const lastPhienRef = useRef<string | null>(null);
-
   if (hasKey === null) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ background: "#000" }}>
@@ -95,8 +165,8 @@ export default function BCRGame() {
   }
 
   const current = tables.find(t => t.ban === selectedTable);
-  const isPlayer = current?.du_doan?.includes("Con");
-
+  const currentHistory = historyMapRef.current[selectedTable] || [];
+  
   // Parse ket_qua into dots: B=Banker(red), P=Player(blue), T=Tie(green)
   const resultDots = (current?.ket_qua || "").split("").slice(-20);
 
@@ -124,7 +194,7 @@ export default function BCRGame() {
       {/* Robot + Chat bubble */}
       <RobotBubble
         robotImage="/images/robot_bcr.gif"
-        robotAlt="Robot BCR"
+        robotAlt="Robot BCR V3"
         visible={popupVisible}
         onToggle={setPopupVisible}
         accentColor="#e0b0ff"
@@ -134,13 +204,13 @@ export default function BCRGame() {
       >
         {!online ? (
           <>
-            <span style={{ fontWeight: "bold", color: "#e0b0ff" }}>🤖 Robot BCR</span><br />
+            <span style={{ fontWeight: "bold", color: "#e0b0ff" }}>🤖 Robot BCR V3</span><br />
             <span style={{ color: "#4db8ff" }}>🔄 Đang kết nối API...</span>
           </>
         ) : (
           <>
             <div className="font-bold mb-1.5 flex items-center justify-between" style={{ color: "#e0b0ff", fontSize: 11 }}>
-              <span>🤖 SEXY BCR VIP</span>
+              <span>🤖 SEXY BCR <span style={{ color: "#ffd700" }}>V3</span></span>
               <div
                 className="px-2 py-0.5 rounded text-[10px] cursor-pointer"
                 style={{ background: "rgba(255,215,0,0.2)", border: "1px solid #ffd700", color: "#ffd700" }}
@@ -179,7 +249,7 @@ export default function BCRGame() {
             {current ? (
               <>
                 <div className="mb-1">
-                  🎯 Phiên <span style={{ color: "#4db8ff", fontWeight: "bold" }}>#{current.phien_hien_tai}</span>
+                  🎯 Phiên <span style={{ color: "#4db8ff", fontWeight: "bold" }}>#{current.phien_hien_tai + 1}</span>
                   <span className="ml-1 text-[9px]" style={{ color: "#888" }}>{current.time}</span>
                 </div>
 
@@ -191,30 +261,50 @@ export default function BCRGame() {
                   }
                 </div>
 
-                {current.cau && (
-                  <div className="text-[10px] mb-1" style={{ color: "#e0b0ff" }}>
-                    🔮 Cầu: {current.cau}
-                  </div>
+                {/* V3 Analysis Display */}
+                {v3Analysis && (
+                  <>
+                    <div className="pt-1 mb-1" style={{ borderTop: "1px solid rgba(255,255,255,0.1)" }}>
+                      🤖 Dự đoán V3:<br />
+                      <span style={{
+                        color: v3Analysis.prediction === "BANKER" ? "#ff3b5c" : "#4d8bff",
+                        fontWeight: "bold",
+                        fontSize: 16,
+                        textShadow: v3Analysis.prediction === "BANKER" ? "0 0 8px rgba(255,59,92,0.6)" : "0 0 8px rgba(77,139,255,0.6)",
+                      }}>
+                        {v3Analysis.prediction}
+                      </span>
+                      <div className="mt-0.5">
+                        📊 Tin cậy: <span style={{ 
+                          color: v3Analysis.confidence >= 85 ? "#00ff99" : v3Analysis.confidence >= 70 ? "#ffd966" : "#ff6b6b", 
+                          fontWeight: "bold", 
+                          fontSize: 13 
+                        }}>{v3Analysis.confidence}%</span>
+                      </div>
+                      {v3Analysis.patternName && (
+                        <div className="text-[9px]" style={{ color: "#e0b0ff" }}>
+                          ⚙️ {v3Analysis.patternName}
+                        </div>
+                      )}
+                      {v3Analysis.suggestion && (
+                        <div className="text-[9px] mt-0.5" style={{ color: v3Analysis.riskLevel === "extreme" ? "#ff3b5c" : v3Analysis.riskLevel === "danger" ? "#ff6b6b" : "#ffd700" }}>
+                          {v3Analysis.suggestion}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Warnings */}
+                    {v3Analysis.warning && (
+                      <div className="text-[8px] mt-1 max-h-[50px] overflow-y-auto" style={{ color: "#aaa", lineHeight: 1.3 }}>
+                        {v3Analysis.warning.split("\n").slice(0, 4).map((w, i) => (
+                          <div key={i}>{w}</div>
+                        ))}
+                      </div>
+                    )}
+                  </>
                 )}
 
-                <div className="pt-1 mb-1" style={{ borderTop: "1px solid rgba(255,255,255,0.1)" }}>
-                  🤖 Dự đoán:<br />
-                  <span style={{
-                    color: isPlayer ? "#4d8bff" : "#ff3b5c",
-                    fontWeight: "bold",
-                    fontSize: 16,
-                    textShadow: isPlayer ? "0 0 8px rgba(77,139,255,0.6)" : "0 0 8px rgba(255,59,92,0.6)",
-                  }}>
-                    {current.du_doan}
-                  </span>
-                  <div className="mt-0.5">
-                    📊 Tin cậy: <span style={{ color: "#ffd966", fontWeight: "bold", fontSize: 13 }}>{current.do_tin_cay}</span>
-                  </div>
-                  <div className="text-[9px]" style={{ color: "#888" }}>
-                    ⚙️ {current.thuat_toan}
-                  </div>
-                </div>
-
+                {/* History dots */}
                 <div className="flex gap-0.5 flex-wrap mt-1 pt-1" style={{ borderTop: "1px solid rgba(255,255,255,0.1)" }}>
                   {resultDots.map((c, i) => (
                     <div key={i} className="w-2.5 h-2.5 rounded-full text-[6px] flex items-center justify-center font-bold" style={{
@@ -226,12 +316,19 @@ export default function BCRGame() {
                     </div>
                   ))}
                 </div>
+
+                {/* DNA & Stats */}
+                {v3Analysis?.streakDNA && (
+                  <div className="text-[8px] mt-1" style={{ color: "#888" }}>
+                    🧬 DNA: {v3Analysis.streakDNA} {v3Analysis.winRate !== undefined && `| B: ${v3Analysis.winRate}%`}
+                  </div>
+                )}
               </>
             ) : (
               <div style={{ color: "#aaa", fontSize: 10 }}>Chọn bàn để xem dự đoán</div>
             )}
 
-            <div className="text-[9px] mt-1" style={{ color: "#666" }}>🟢 Đã đồng bộ game</div>
+            <div className="text-[9px] mt-1" style={{ color: "#666" }}>🟢 V3 Siêu Gắt | {currentHistory.length} phiên</div>
           </>
         )}
       </RobotBubble>
