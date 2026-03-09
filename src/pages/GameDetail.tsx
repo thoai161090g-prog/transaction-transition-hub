@@ -236,83 +236,49 @@ export default function GameDetail() {
         />
 
         {/* Robot + Chat bubble */}
-        <div
-          className="fixed z-[9999] flex items-center select-none"
-          style={{ left: popupPos.x, top: popupPos.y, touchAction: "none", maxWidth: "calc(100vw - 8px)" }}
+        <RobotBubble
+          robotImage="/images/robot.gif"
+          robotAlt="Robot Sunwin"
+          visible={popupVisible}
+          onToggle={setPopupVisible}
+          accentColor="#ffd700"
+          glowColor="#ff8c00"
+          position={popupPos}
+          onPositionChange={setPopupPos}
         >
-          {/* Robot GIF */}
-          <img
-            src="/images/robot.gif"
-            alt="Robot"
-            className="w-[42px] h-[42px] cursor-move"
-            onPointerDown={onPointerDown}
-            onPointerMove={onPointerMove}
-            onPointerUp={onPointerUp}
-          />
-
-          {/* Chat bubble */}
-          {popupVisible && (
-            <div className="ml-1" style={{
-              background: "rgba(0,0,0,0.85)",
-              color: "#fff",
-              padding: 8,
-              borderRadius: 10,
-              width: "min(170px, calc(100vw - 78px))",
-              backdropFilter: "blur(10px)",
-              border: "1px solid rgba(255,255,255,0.2)",
-              boxShadow: "0 0 20px rgba(0,0,0,0.6)",
-              fontSize: 10,
-            }}>
-              {sunwinLoading ? (
-                <>
-                  <span>🤖 Robot SUNWIN</span><br />
-                  <span style={{ color: "#4db8ff" }}>🔄 Đang kết nối API...</span>
-                </>
-              ) : sunwinError ? (
-                <>
-                  <span>🤖 Robot SUNWIN</span><br />
-                  <span style={{ color: "#ff3b5c" }}>🔴 Không lấy được dữ liệu</span>
-                  <div style={{ fontSize: 12, color: "#aaa", marginTop: 6 }}>Kiểm tra lại API</div>
-                </>
-              ) : sunwinData ? (
-                <>
-                  🎯 Phiên tiếp: <span style={{ color: "#4db8ff", fontWeight: "bold" }}>{sunwinData.session}</span><br /><br />
-                  🤖 Dự đoán:<br />
-                  <span style={{
-                    color: sunwinData.result === "TÀI" ? "#00ff99" : "#ff3b5c",
-                    fontWeight: "bold",
-                    fontSize: 14,
-                  }}>
-                    {sunwinData.result}
-                  </span><br /><br />
-                  📊 Độ tin cậy: <span style={{ color: "#ffd966", fontWeight: "bold", fontSize: 13 }}>{sunwinData.percent}%</span>
-                  {sunwinData.warning && (
-                    <div style={{ fontSize: 9, color: sunwinData.warning.includes("Bệt") ? "#ff3b5c" : "#ffd700", marginTop: 4 }}>
-                      {sunwinData.warning}
-                    </div>
-                  )}
-                  <div style={{ fontSize: 9, color: "#aaa", marginTop: 4 }}>📈 Lịch sử: {historyRef.current.slice(-8).join(" ")}</div>
-                </>
-              ) : null}
-
-              {/* Close */}
-              <div
-                className="absolute top-1 right-2 cursor-pointer text-xs"
-                style={{ color: "rgba(255,255,255,0.4)" }}
-                onClick={() => setPopupVisible(false)}
-              >✕</div>
-            </div>
-          )}
-
-          {/* Reopen button when closed */}
-          {!popupVisible && (
-            <div
-              onClick={() => setPopupVisible(true)}
-              className="ml-2 w-8 h-8 rounded-full flex items-center justify-center cursor-pointer text-sm"
-              style={{ background: "rgba(0,0,0,0.8)", border: "1px solid #ffd700", color: "#ffd700" }}
-            >💬</div>
-          )}
-        </div>
+          {sunwinLoading ? (
+            <>
+              <span className="font-bold" style={{ color: "#ffd700" }}>🤖 Robot SUNWIN</span><br />
+              <span style={{ color: "#4db8ff" }}>🔄 Đang kết nối API...</span>
+            </>
+          ) : sunwinError ? (
+            <>
+              <span className="font-bold" style={{ color: "#ffd700" }}>🤖 Robot SUNWIN</span><br />
+              <span style={{ color: "#ff3b5c" }}>🔴 Không lấy được dữ liệu</span>
+              <div style={{ fontSize: 12, color: "#aaa", marginTop: 6 }}>Kiểm tra lại API</div>
+            </>
+          ) : sunwinData ? (
+            <>
+              <div className="font-bold mb-1" style={{ color: "#ffd700", fontSize: 11 }}>🤖 Robot SUNWIN</div>
+              🎯 Phiên tiếp: <span style={{ color: "#4db8ff", fontWeight: "bold" }}>{sunwinData.session}</span><br /><br />
+              🤖 Dự đoán:<br />
+              <span style={{
+                color: sunwinData.result === "TÀI" ? "#00ff99" : "#ff3b5c",
+                fontWeight: "bold",
+                fontSize: 14,
+              }}>
+                {sunwinData.result}
+              </span><br /><br />
+              📊 Độ tin cậy: <span style={{ color: "#ffd966", fontWeight: "bold", fontSize: 13 }}>{sunwinData.percent}%</span>
+              {sunwinData.warning && (
+                <div style={{ fontSize: 9, color: sunwinData.warning.includes("Bệt") ? "#ff3b5c" : "#ffd700", marginTop: 4 }}>
+                  {sunwinData.warning}
+                </div>
+              )}
+              <div style={{ fontSize: 9, color: "#aaa", marginTop: 4 }}>📈 Lịch sử: {historyRef.current.slice(-8).join(" ")}</div>
+            </>
+          ) : null}
+        </RobotBubble>
       </div>
     );
   }
