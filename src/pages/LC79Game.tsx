@@ -496,27 +496,65 @@ export default function LC79Game() {
               </span>
             </div>
 
+            {/* Risk Level Badge */}
+            {prediction.riskLevel && prediction.riskLevel !== "safe" && (
+              <div className="mb-2 px-2 py-1 rounded-md text-center text-[10px] font-bold" style={{
+                background: prediction.riskLevel === "extreme" ? "rgba(255,0,0,0.3)" :
+                  prediction.riskLevel === "danger" ? "rgba(255,59,92,0.25)" :
+                  "rgba(255,165,0,0.2)",
+                color: prediction.riskLevel === "extreme" ? "#ff0000" :
+                  prediction.riskLevel === "danger" ? "#ff3b5c" : "#ffa500",
+                border: `1px solid ${prediction.riskLevel === "extreme" ? "#ff0000" : prediction.riskLevel === "danger" ? "#ff3b5c" : "#ffa500"}`,
+                animation: prediction.riskLevel === "extreme" ? "pulse 0.5s infinite" : prediction.riskLevel === "danger" ? "pulse 1s infinite" : "none",
+              }}>
+                {prediction.riskLevel === "extreme" ? "🚨 CỰC KỲ NGUY HIỂM" :
+                 prediction.riskLevel === "danger" ? "⚠️ NGUY HIỂM" : "⚡ CẨN THẬN"}
+              </div>
+            )}
+
             <div className="pt-2 mb-2" style={{ borderTop: "1px solid rgba(255,255,255,0.15)" }}>
+              {prediction.patternName && (
+                <div className="mb-1" style={{ fontSize: 10, color: "#4db8ff", fontWeight: "bold" }}>
+                  🧠 {prediction.patternName}
+                </div>
+              )}
               🤖 Dự đoán phiên tiếp {nextSessionId && <span style={{ color: "#4db8ff", fontWeight: "bold" }}>#{nextSessionId}</span>}:<br />
               <span style={{
                 color: prediction.result === "TÀI" ? "#00ff99" : "#ff3b5c",
                 fontWeight: "bold",
-                fontSize: 15,
+                fontSize: 16,
+                textShadow: prediction.result === "TÀI" ? "0 0 8px rgba(0,255,153,0.5)" : "0 0 8px rgba(255,59,92,0.5)",
               }}>
                 {prediction.result}
               </span>
               <br />
-              📊 Độ tin cậy: <span style={{ color: "#ffd966", fontWeight: "bold", fontSize: 13 }}>{prediction.percent}%</span>
-              {prediction.warning && (
-                <div style={{ fontSize: 9, color: prediction.warning.includes("Bệt") ? "#ff3b5c" : "#ffd700", marginTop: 4 }}>
-                  {prediction.warning}
+              📊 Độ tin cậy: <span style={{ color: prediction.percent >= 85 ? "#00ff99" : prediction.percent >= 70 ? "#ffd966" : "#ff3b5c", fontWeight: "bold", fontSize: 13 }}>{prediction.percent}%</span>
+              
+              {/* Suggestion */}
+              {prediction.suggestion && (
+                <div style={{ fontSize: 9, color: "#4db8ff", marginTop: 4, padding: "3px 6px", background: "rgba(77,184,255,0.1)", borderRadius: 4, borderLeft: "2px solid #4db8ff" }}>
+                  💡 {prediction.suggestion}
                 </div>
               )}
-              <div style={{ fontSize: 9, color: "#aaa", marginTop: 3 }}>📈 {history.slice(-8).join(" ")}</div>
+
+              {/* Warnings */}
+              {prediction.warning && prediction.warning.split("\n").map((w, i) => (
+                <div key={i} style={{
+                  fontSize: 9,
+                  color: w.includes("🚨") || w.includes("NGUY") ? "#ff3b5c" :
+                    w.includes("🪤") || w.includes("BẪY") ? "#ff6b00" :
+                    w.includes("🔥") ? "#ffd700" :
+                    w.includes("📈") || w.includes("📊") ? "#aaa" : "#ffd700",
+                  marginTop: 3,
+                  fontWeight: w.includes("🚨") ? "bold" : "normal",
+                }}>
+                  {w}
+                </div>
+              ))}
             </div>
 
             <div className="flex gap-1 flex-wrap mt-1 pt-1.5" style={{ borderTop: "1px solid rgba(255,255,255,0.1)" }}>
-              {history.slice(-10).map((h, i) => (
+              {history.slice(-12).map((h, i) => (
                 <div key={i} className="w-3 h-3 rounded-full" title={h === "T" ? "TÀI" : "XỈU"} style={{
                   background: h === "T" ? "#00ff99" : "#ff3b5c",
                   boxShadow: h === "T" ? "0 0 5px #00ff99" : "0 0 5px #ff3b5c",
@@ -527,18 +565,32 @@ export default function LC79Game() {
             {betting && (
               <div className="text-[11px] mt-1.5" style={{ color: "#aaa" }}>
                 Cược: <span style={{ color: "#00ff99" }}>TÀI {betting.nguoi_cuoc.tai}</span> / <span style={{ color: "#ff3b5c" }}>XỈU {betting.nguoi_cuoc.xiu}</span>
+                {/* Phân tích lệch cược */}
+                {(() => {
+                  const total = betting.nguoi_cuoc.tai + betting.nguoi_cuoc.xiu;
+                  if (total > 0) {
+                    const taiPct = Math.round(betting.nguoi_cuoc.tai / total * 100);
+                    const lech = Math.abs(taiPct - 50);
+                    if (lech >= 20) {
+                      return <div style={{ fontSize: 9, color: "#ff6b00", marginTop: 2 }}>⚠️ Lệch cược {lech}% - {taiPct > 50 ? "Đông TÀI" : "Đông XỈU"}</div>;
+                    }
+                  }
+                  return null;
+                })()}
               </div>
             )}
 
             <div className="relative h-1 rounded-full overflow-hidden mt-2" style={{ background: "rgba(255,255,255,0.1)" }}>
               <div className="absolute inset-y-0 left-0 rounded-full" style={{
                 width: `${progress * 100}%`,
-                background: "linear-gradient(90deg, #ffd700, #ff8c00)",
+                background: prediction.riskLevel === "extreme" ? "linear-gradient(90deg, #ff0000, #ff3b5c)" :
+                  prediction.riskLevel === "danger" ? "linear-gradient(90deg, #ff3b5c, #ff8c00)" :
+                  "linear-gradient(90deg, #ffd700, #ff8c00)",
                 transition: "width 0.1s linear"
               }} />
             </div>
 
-            <div className="text-[10px] mt-1" style={{ color: "#666" }}>🟢 Đã đồng bộ game</div>
+            <div className="text-[10px] mt-1" style={{ color: "#666" }}>🟢 Đã đồng bộ game | 📊 {history.length} phiên</div>
           </>
         ) : null}
       </RobotBubble>
