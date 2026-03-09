@@ -171,7 +171,7 @@ export default function BCRGame() {
   const resultDots = (current?.ket_qua || "").split("").slice(-20);
 
   return (
-    <div className="min-h-screen relative" style={{ background: "#000", overflow: "hidden" }}>
+    <div className="game-page min-h-screen relative" style={{ background: "#000" }}>
       <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet" />
 
       {/* Back button */}

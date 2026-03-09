@@ -30,18 +30,22 @@ export default function RobotBubble({
   const glow = glowColor || accentColor;
 
   const onPointerDown = (e: React.PointerEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     dragState.current = { dragging: true, startX: e.clientX, startY: e.clientY, startLeft: position.x, startTop: position.y };
     setIsDragging(true);
     (e.target as HTMLElement).setPointerCapture(e.pointerId);
   };
   const onPointerMove = (e: React.PointerEvent) => {
     if (!dragState.current.dragging) return;
+    e.preventDefault();
     onPositionChange({
       x: Math.max(0, Math.min(window.innerWidth - 230, dragState.current.startLeft + (e.clientX - dragState.current.startX))),
       y: Math.max(0, Math.min(window.innerHeight - 190, dragState.current.startTop + (e.clientY - dragState.current.startY))),
     });
   };
   const onPointerUp = (e: React.PointerEvent) => {
+    e.preventDefault();
     dragState.current.dragging = false;
     setIsDragging(false);
     (e.target as HTMLElement).releasePointerCapture(e.pointerId);
