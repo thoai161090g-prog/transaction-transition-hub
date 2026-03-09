@@ -85,21 +85,7 @@ export default function BCRGame() {
     return () => clearInterval(interval);
   }, [hasKey, fetchData]);
 
-  const onPointerDown = (e: React.PointerEvent) => {
-    dragState.current = { dragging: true, startX: e.clientX, startY: e.clientY, startLeft: botPos.x, startTop: botPos.y };
-    (e.target as HTMLElement).setPointerCapture(e.pointerId);
-  };
-  const onPointerMove = (e: React.PointerEvent) => {
-    if (!dragState.current.dragging) return;
-    setBotPos({
-      x: Math.max(0, Math.min(window.innerWidth - 230, dragState.current.startLeft + (e.clientX - dragState.current.startX))),
-      y: Math.max(0, Math.min(window.innerHeight - 190, dragState.current.startTop + (e.clientY - dragState.current.startY))),
-    });
-  };
-  const onPointerUp = (e: React.PointerEvent) => {
-    dragState.current.dragging = false;
-    (e.target as HTMLElement).releasePointerCapture(e.pointerId);
-  };
+  const lastPhienRef = useRef<string | null>(null);
 
   if (hasKey === null) {
     return (
