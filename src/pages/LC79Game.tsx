@@ -685,7 +685,15 @@ export default function LC79Game() {
               }} />
             </div>
 
-            <div className="text-[10px] mt-1" style={{ color: "#666" }}>🟢 Đã đồng bộ game | 📊 {history.length} phiên</div>
+            <div className="text-[10px] mt-1 flex justify-between" style={{ color: "#666" }}>
+              <span>🟢 Đã đồng bộ | 📊 {history.length}p</span>
+              {prediction.streakDNA && <span style={{ color: "#555" }}>🧬 {prediction.streakDNA}</span>}
+            </div>
+            {prediction.winRate !== undefined && (
+              <div className="text-[9px] mt-0.5" style={{ color: "#555" }}>
+                TÀI: {prediction.winRate}% | XỈU: {100 - prediction.winRate}% (12p)
+              </div>
+            )}
           </>
         ) : null}
       </RobotBubble>
