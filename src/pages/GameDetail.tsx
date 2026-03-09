@@ -58,9 +58,14 @@ export default function GameDetail() {
       // Add to history
       historyRef.current = [...historyRef.current.slice(-19), currentResult];
       
-      // Analyze pattern to predict NEXT session
-      const analysis = analyzePattern(historyRef.current);
+      // Analyze pattern using V3 algorithm
+      const analysis = analyzePatternV3(historyRef.current, "taixiu");
       const nextSession = typeof session === "number" ? session + 1 : `${session}+1`;
+
+      // Play alert sounds
+      const hasTrap = (analysis.warning ?? "").includes("BẪY");
+      const hasPattern = (analysis.warning ?? "").includes("🔥");
+      playAlertByRisk(analysis.riskLevel ?? "safe", { trapDetected: hasTrap, patternFound: hasPattern });
 
       setSunwinData({
         session: nextSession,
@@ -69,6 +74,10 @@ export default function GameDetail() {
         prediction: analysis.prediction,
         confidence: analysis.confidence,
         warning: analysis.warning,
+        riskLevel: analysis.riskLevel,
+        patternName: analysis.patternName,
+        suggestion: analysis.suggestion,
+        streakDNA: analysis.streakDNA,
       });
       setSunwinLoading(false);
       setSunwinError(false);
