@@ -29,9 +29,7 @@ export default function BCRGame() {
   const [popupVisible, setPopupVisible] = useState(true);
   const [menuOpen, setMenuOpen] = useState(false);
 
-  const dragState = useRef({ dragging: false, startX: 0, startY: 0, startLeft: 20, startTop: 80 });
   const [botPos, setBotPos] = useState({ x: 20, y: 80 });
-  const lastPhienRef = useRef<string | null>(null);
 
   const POLL_MS = 5000;
 
