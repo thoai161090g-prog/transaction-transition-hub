@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import RobotBubble from "@/components/RobotBubble";
+import { playAlertByRisk } from "@/lib/alert-sounds";
 
 interface BettingInfo {
   phien_cuoc: number;
@@ -498,6 +499,14 @@ export default function LC79Game() {
         setHistory(newHistory);
         lastSessionRef.current = phienId;
 
+        // 🔊 Phát âm thanh cảnh báo (cả khi chưa login)
+        if (newHistory.length >= 2 && !user) {
+          const analysis = analyzePattern(newHistory);
+          const hasTrap = (analysis.warning ?? "").includes("BẪY");
+          const hasPattern = (analysis.warning ?? "").includes("🔥");
+          playAlertByRisk(analysis.riskLevel ?? "safe", { trapDetected: hasTrap, patternFound: hasPattern });
+        }
+
         // Lưu vào DB
         if (user) {
           await supabase.from("game_history").upsert({
@@ -509,6 +518,15 @@ export default function LC79Game() {
 
           if (newHistory.length >= 1) {
             const analysis = analyzePattern(newHistory);
+
+            // 🔊 Phát âm thanh cảnh báo
+            const hasTrap = (analysis.warning ?? "").includes("BẪY");
+            const hasPattern = (analysis.warning ?? "").includes("🔥");
+            playAlertByRisk(
+              analysis.riskLevel ?? "safe",
+              { trapDetected: hasTrap, patternFound: hasPattern }
+            );
+
             await supabase.from("analysis_history").insert({
               user_id: user.id,
               game: "LC79",
