@@ -327,126 +327,82 @@ export default function LC79Game() {
       />
 
       {/* Robot + Chat bubble */}
-      <div
-        className="fixed z-[9999] flex items-center select-none"
-        style={{ left: botPos.x, top: botPos.y, touchAction: "none", maxWidth: "calc(100vw - 8px)" }}
+      <RobotBubble
+        robotImage="/images/robot.gif"
+        robotAlt="Robot LC79"
+        visible={popupVisible}
+        onToggle={setPopupVisible}
+        accentColor="#ffd700"
+        glowColor="#ff8c00"
+        position={botPos}
+        onPositionChange={setBotPos}
       >
-        {/* Robot GIF */}
-        <img
-          src="/images/robot.gif"
-          alt="Robot"
-          className="w-[42px] h-[42px] cursor-move"
-          onPointerDown={onPointerDown}
-          onPointerMove={onPointerMove}
-          onPointerUp={onPointerUp}
-        />
+        {!online ? (
+          <>
+            <span className="font-bold" style={{ color: "#ffd700" }}>🤖 Robot LC79</span><br />
+            <span style={{ color: "#4db8ff" }}>🔄 Đang kết nối API...</span>
+          </>
+        ) : apiData ? (
+          <>
+            <div className="font-bold mb-1" style={{ color: "#ffd700", fontSize: 11 }}>🤖 Robot LC79</div>
 
-        {/* Chat bubble */}
-        {popupVisible && (
-          <div className="ml-1 relative" style={{
-            background: "rgba(0,0,0,0.85)",
-            color: "#fff",
-            padding: 8,
-            borderRadius: 10,
-            width: "min(170px, calc(100vw - 78px))",
-            backdropFilter: "blur(10px)",
-            border: "1px solid rgba(255,255,255,0.2)",
-            boxShadow: "0 0 20px rgba(0,0,0,0.6)",
-            fontSize: 10,
-          }}>
-            {!online ? (
-              <>
-                <span>🤖 Robot LC79</span><br />
-                <span style={{ color: "#4db8ff" }}>🔄 Đang kết nối API...</span>
-              </>
-            ) : apiData ? (
-              <>
-                <div className="font-bold mb-1" style={{ color: "#ffd700", fontSize: 11 }}>🤖 Robot LC79</div>
+            <div className="mb-2">
+              🎯 Phiên <span style={{ color: "#4db8ff", fontWeight: "bold" }}>#{phienId}</span>
+              <br />
+              🎲 Xúc xắc: <span style={{ fontWeight: "bold", color: "#fff" }}>{dices.join(" - ")}</span>
+              <br />
+              📊 Điểm: <span style={{ fontWeight: "bold", color: "#facc15" }}>{point}</span>
+              <span style={{ marginLeft: 8, fontWeight: "bold", color: isTai ? "#00ff99" : "#ff3b5c" }}>
+                {isTai ? "TÀI" : "XỈU"}
+              </span>
+            </div>
 
-                {/* Current session */}
-                <div className="mb-2">
-                  🎯 Phiên <span style={{ color: "#4db8ff", fontWeight: "bold" }}>#{phienId}</span>
-                  <br />
-                  🎲 Xúc xắc: <span style={{ fontWeight: "bold", color: "#fff" }}>{dices.join(" - ")}</span>
-                  <br />
-                  📊 Điểm: <span style={{ fontWeight: "bold", color: "#facc15" }}>{point}</span>
-                  <span style={{
-                    marginLeft: 8,
-                    fontWeight: "bold",
-                    color: isTai ? "#00ff99" : "#ff3b5c",
-                  }}>
-                    {isTai ? "TÀI" : "XỈU"}
-                  </span>
+            <div className="pt-2 mb-2" style={{ borderTop: "1px solid rgba(255,255,255,0.15)" }}>
+              🤖 Dự đoán phiên tiếp {nextSessionId && <span style={{ color: "#4db8ff", fontWeight: "bold" }}>#{nextSessionId}</span>}:<br />
+              <span style={{
+                color: prediction.result === "TÀI" ? "#00ff99" : "#ff3b5c",
+                fontWeight: "bold",
+                fontSize: 15,
+              }}>
+                {prediction.result}
+              </span>
+              <br />
+              📊 Độ tin cậy: <span style={{ color: "#ffd966", fontWeight: "bold", fontSize: 13 }}>{prediction.percent}%</span>
+              {prediction.warning && (
+                <div style={{ fontSize: 9, color: prediction.warning.includes("Bệt") ? "#ff3b5c" : "#ffd700", marginTop: 4 }}>
+                  {prediction.warning}
                 </div>
+              )}
+              <div style={{ fontSize: 9, color: "#aaa", marginTop: 3 }}>📈 {history.slice(-8).join(" ")}</div>
+            </div>
 
-                {/* Prediction */}
-                <div className="pt-2 mb-2" style={{ borderTop: "1px solid rgba(255,255,255,0.15)" }}>
-                  🤖 Dự đoán phiên tiếp {nextSessionId && <span style={{ color: "#4db8ff", fontWeight: "bold" }}>#{nextSessionId}</span>}:<br />
-                  <span style={{
-                    color: prediction.result === "TÀI" ? "#00ff99" : "#ff3b5c",
-                    fontWeight: "bold",
-                    fontSize: 15,
-                  }}>
-                    {prediction.result}
-                  </span>
-                  <br />
-                  📊 Độ tin cậy: <span style={{ color: "#ffd966", fontWeight: "bold", fontSize: 13 }}>{prediction.percent}%</span>
-                  {prediction.warning && (
-                    <div style={{ fontSize: 9, color: prediction.warning.includes("Bệt") ? "#ff3b5c" : "#ffd700", marginTop: 4 }}>
-                      {prediction.warning}
-                    </div>
-                  )}
-                  <div style={{ fontSize: 9, color: "#aaa", marginTop: 3 }}>📈 {history.slice(-8).join(" ")}</div>
-                </div>
+            <div className="flex gap-1 flex-wrap mt-1 pt-1.5" style={{ borderTop: "1px solid rgba(255,255,255,0.1)" }}>
+              {history.slice(-10).map((h, i) => (
+                <div key={i} className="w-3 h-3 rounded-full" title={h === "T" ? "TÀI" : "XỈU"} style={{
+                  background: h === "T" ? "#00ff99" : "#ff3b5c",
+                  boxShadow: h === "T" ? "0 0 5px #00ff99" : "0 0 5px #ff3b5c",
+                }} />
+              ))}
+            </div>
 
-                {/* History dots */}
-                <div className="flex gap-1 flex-wrap mt-1 pt-1.5" style={{ borderTop: "1px solid rgba(255,255,255,0.1)" }}>
-                  {history.slice(-10).map((h, i) => (
-                    <div key={i} className="w-3 h-3 rounded-full" title={h === "T" ? "TÀI" : "XỈU"} style={{
-                      background: h === "T" ? "#00ff99" : "#ff3b5c",
-                      boxShadow: h === "T" ? "0 0 5px #00ff99" : "0 0 5px #ff3b5c",
-                    }} />
-                  ))}
-                </div>
+            {betting && (
+              <div className="text-[11px] mt-1.5" style={{ color: "#aaa" }}>
+                Cược: <span style={{ color: "#00ff99" }}>TÀI {betting.nguoi_cuoc.tai}</span> / <span style={{ color: "#ff3b5c" }}>XỈU {betting.nguoi_cuoc.xiu}</span>
+              </div>
+            )}
 
-                {/* Betting info */}
-                {betting && (
-                  <div className="text-[11px] mt-1.5" style={{ color: "#aaa" }}>
-                    Cược: <span style={{ color: "#00ff99" }}>TÀI {betting.nguoi_cuoc.tai}</span> / <span style={{ color: "#ff3b5c" }}>XỈU {betting.nguoi_cuoc.xiu}</span>
-                  </div>
-                )}
+            <div className="relative h-1 rounded-full overflow-hidden mt-2" style={{ background: "rgba(255,255,255,0.1)" }}>
+              <div className="absolute inset-y-0 left-0 rounded-full" style={{
+                width: `${progress * 100}%`,
+                background: "linear-gradient(90deg, #ffd700, #ff8c00)",
+                transition: "width 0.1s linear"
+              }} />
+            </div>
 
-                {/* Progress bar */}
-                <div className="relative h-1 rounded-full overflow-hidden mt-2" style={{ background: "rgba(255,255,255,0.1)" }}>
-                  <div className="absolute inset-y-0 left-0 rounded-full" style={{
-                    width: `${progress * 100}%`,
-                    background: "linear-gradient(90deg, #ffd700, #ff8c00)",
-                    transition: "width 0.1s linear"
-                  }} />
-                </div>
-
-                <div className="text-[10px] mt-1" style={{ color: "#666" }}>🟢 Đã đồng bộ game</div>
-              </>
-            ) : null}
-
-            {/* Close */}
-            <div
-              className="absolute top-1 right-2 cursor-pointer text-xs"
-              style={{ color: "rgba(255,255,255,0.4)" }}
-              onClick={() => setPopupVisible(false)}
-            >✕</div>
-          </div>
-        )}
-
-        {/* Reopen button */}
-        {!popupVisible && (
-          <div
-            onClick={() => setPopupVisible(true)}
-            className="ml-2 w-8 h-8 rounded-full flex items-center justify-center cursor-pointer text-sm"
-            style={{ background: "rgba(0,0,0,0.8)", border: "1px solid #ffd700", color: "#ffd700" }}
-          >💬</div>
-        )}
-      </div>
+            <div className="text-[10px] mt-1" style={{ color: "#666" }}>🟢 Đã đồng bộ game</div>
+          </>
+        ) : null}
+      </RobotBubble>
     </div>
   );
 }
