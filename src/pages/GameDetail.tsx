@@ -257,7 +257,7 @@ export default function GameDetail() {
 
   // === MD5 GAMES UI (non-Sunwin) ===
   return (
-    <div className="min-h-screen relative" style={{ background: "#000", overflow: "hidden" }}>
+    <div className="game-page min-h-screen relative" style={{ background: "#000" }}>
       <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Montserrat:wght@400;700&display=swap" rel="stylesheet" />
 
       {/* Back button */}
