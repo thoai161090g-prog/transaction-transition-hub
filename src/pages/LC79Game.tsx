@@ -373,7 +373,7 @@ export default function LC79Game() {
       riskLevel = "extreme";
       suggestion = "🚨 DỪNG CƯỢC! Bệt " + curStreak + " phiên - Chờ bẻ rõ";
     } else if (curStreak >= 6) {
-      riskLevel = riskLevel === "extreme" ? "extreme" : "danger";
+      riskLevel = "danger";
     }
 
     // Bẫy cầu → tăng risk
