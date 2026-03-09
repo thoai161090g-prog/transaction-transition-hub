@@ -49,8 +49,8 @@ export default function LC79Game() {
     hasActiveKey().then(setHasKey);
   }, []);
 
-  // === THUẬT TOÁN PHÂN TÍCH NHỊP CẦU LC79 NÂNG CAO - ĐÂM SÂU VÀO GAME ===
-  const analyzePattern = (hist: string[]): { prediction: string; confidence: number; warning?: string; riskLevel?: "safe" | "caution" | "danger" | "extreme"; patternName?: string; suggestion?: string } => {
+  // === THUẬT TOÁN PHÂN TÍCH NHỊP CẦU LC79 V3 - SIÊU GẮT ===
+  const analyzePattern = (hist: string[]): { prediction: string; confidence: number; warning?: string; riskLevel?: "safe" | "caution" | "danger" | "extreme"; patternName?: string; suggestion?: string; streakDNA?: string; winRate?: number } => {
     const len = hist.length;
     if (len < 1) return { prediction: "TÀI", confidence: 50, riskLevel: "safe", patternName: "Chưa đủ dữ liệu" };
     if (len < 2) return { prediction: hist[0] === "T" ? "XỈU" : "TÀI", confidence: 55, riskLevel: "safe", patternName: "Khởi đầu" };
@@ -59,7 +59,7 @@ export default function LC79Game() {
     const opp = (v: string) => v === "T" ? "X" : "T";
     const toLabel = (v: string) => v === "T" ? "TÀI" : "XỈU";
 
-    // --- Tách streaks ---
+    // ========== TÁCH STREAKS ==========
     const streaks: { value: string; count: number }[] = [];
     let sVal = hist[0], sCount = 1;
     for (let i = 1; i < len; i++) {
@@ -69,66 +69,146 @@ export default function LC79Game() {
     streaks.push({ value: sVal, count: sCount });
     const curStreak = streaks[streaks.length - 1].count;
 
-    // --- Thống kê nâng cao ---
-    const w12 = hist.slice(-12);
-    const w8 = hist.slice(-8);
-    const w5 = hist.slice(-5);
-    const tR12 = w12.filter(h => h === "T").length / w12.length;
-    const tR8 = w8.filter(h => h === "T").length / w8.length;
-    const tR5 = w5.filter(h => h === "T").length / w5.length;
+    // ========== STREAK DNA FINGERPRINT ==========
+    // Mã hóa nhịp cầu thành chuỗi DNA: "2T-1X-3T-2X" → nhận diện pattern lặp
+    const streakDNA = streaks.slice(-8).map(s => `${s.count}${s.value}`).join("-");
+    const dnaShort = streaks.slice(-4).map(s => s.count).join("");
 
-    // --- Momentum: Xu hướng thay đổi gần đây ---
-    const momentum = tR5 - tR12; // Dương = TÀI đang lên, Âm = XỈU đang lên
-    const momentumStrength = Math.abs(momentum);
+    // ========== THỐNG KÊ ĐA TẦNG ==========
+    const windows = [5, 8, 12, 16, 20].map(w => {
+      const slice = hist.slice(-w);
+      const tCount = slice.filter(h => h === "T").length;
+      return { w, tR: tCount / slice.length, xR: (slice.length - tCount) / slice.length, len: slice.length };
+    }).filter(s => s.len >= s.w * 0.8);
+
+    const tR5 = windows.find(w => w.w === 5)?.tR ?? 0.5;
+    const tR8 = windows.find(w => w.w === 8)?.tR ?? 0.5;
+    const tR12 = windows.find(w => w.w === 12)?.tR ?? 0.5;
+    const tR16 = windows.find(w => w.w === 16)?.tR ?? 0.5;
+    const tR20 = windows.find(w => w.w === 20)?.tR ?? 0.5;
+
+    // ========== MOMENTUM ĐA TẦNG ==========
+    const momShort = tR5 - tR12;   // Ngắn vs Trung
+    const momMid = tR8 - tR16;     // Trung vs Dài
+    const momLong = tR12 - tR20;   // Dài vs Siêu dài
+    const momTotal = (momShort * 3 + momMid * 2 + momLong) / 6; // Trọng số giảm dần
+    const momStrength = Math.abs(momTotal);
+
+    // ========== DIVERGENCE: Phân kỳ giữa các window ==========
+    // Khi momentum ngắn đi ngược momentum dài → tín hiệu đảo chiều mạnh
+    let divergence = false;
+    let divWarn = "";
+    if (Math.sign(momShort) !== Math.sign(momLong) && Math.abs(momShort) > 0.15 && Math.abs(momLong) > 0.1) {
+      divergence = true;
+      const shortDir = momShort > 0 ? "TÀI" : "XỈU";
+      const longDir = momLong > 0 ? "TÀI" : "XỈU";
+      divWarn = `🔀 PHÂN KỲ: Ngắn→${shortDir} vs Dài→${longDir}`;
+    }
 
     const avgStreak = streaks.length > 2
       ? streaks.slice(0, -1).reduce((a, b) => a + b.count, 0) / (streaks.length - 1)
       : 2;
+    const maxStreak = streaks.length > 1 ? Math.max(...streaks.slice(0, -1).map(s => s.count)) : curStreak;
+    const medianStreak = (() => {
+      if (streaks.length <= 1) return 2;
+      const sorted = streaks.slice(0, -1).map(s => s.count).sort((a, b) => a - b);
+      const mid = Math.floor(sorted.length / 2);
+      return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+    })();
 
-    // --- Nhịp 1-1 ---
+    // ========== FIBONACCI STREAK ==========
+    // Streak lengths following Fibonacci: 1-1-2-3-5-8
+    const fib = [1, 1, 2, 3, 5, 8, 13];
+    const isFibStreak = fib.includes(curStreak) && streaks.length >= 2 && fib.includes(streaks[streaks.length - 2].count);
+    const nextFib = fib.find(f => f > curStreak) ?? curStreak + 1;
+
+    // ========== NHỊP CẦU DETECTION ==========
+    const r1_10 = len >= 10 && hist.slice(-10).every((v, i, a) => i === 0 || v !== a[i - 1]);
     const r1_8 = len >= 8 && hist.slice(-8).every((v, i, a) => i === 0 || v !== a[i - 1]);
     const r1_6 = len >= 6 && hist.slice(-6).every((v, i, a) => i === 0 || v !== a[i - 1]);
     const r1_4 = len >= 4 && hist.slice(-4).every((v, i, a) => i === 0 || v !== a[i - 1]);
-    const isR1 = r1_8 || r1_6 || r1_4;
+    const isR1 = r1_10 || r1_8 || r1_6 || r1_4;
 
-    // --- Nhịp 2-2 ---
-    const isR2 = streaks.length >= 3 && (() => {
-      const r = streaks.slice(-4);
-      return r.length >= 3 && r.every(s => s.count === 2) &&
+    const checkRhythm = (n: number) => streaks.length >= n && (() => {
+      const r = streaks.slice(-(n + 1));
+      return r.length >= n && r.every(s => s.count === n) &&
         r.every((s, i) => i === 0 || s.value !== r[i - 1].value);
     })();
-
-    // --- Nhịp 3-3 ---
-    const isR3 = streaks.length >= 2 && (() => {
+    const isR2 = checkRhythm(2);
+    const isR3 = checkRhythm(3);
+    const isR4 = checkRhythm(4);
+    const isR5 = streaks.length >= 2 && (() => {
       const r = streaks.slice(-3);
-      return r.filter(s => s.count === 3).length >= 2 &&
+      return r.filter(s => s.count === 5).length >= 2 &&
         r.every((s, i) => i === 0 || s.value !== r[i - 1].value);
     })();
 
-    // --- Nhịp 4-4: TTTT XXXX TTTT ---
-    const isR4 = streaks.length >= 2 && (() => {
-      const r = streaks.slice(-3);
-      return r.filter(s => s.count === 4).length >= 2 &&
-        r.every((s, i) => i === 0 || s.value !== r[i - 1].value);
-    })();
+    // ========== CẦU GÃY: Nhịp ổn rồi bị phá đột ngột ==========
+    let cauGay = false;
+    let cauGayWarn = "";
+    if (streaks.length >= 4) {
+      const prev3 = streaks.slice(-4, -1).map(s => s.count);
+      const avgPrev = prev3.reduce((a, b) => a + b, 0) / 3;
+      const variance = prev3.reduce((a, b) => a + (b - avgPrev) ** 2, 0) / 3;
+      if (variance <= 0.5 && Math.abs(curStreak - avgPrev) >= 2) {
+        cauGay = true;
+        cauGayWarn = `💥 CẦU GÃY: Nhịp ${prev3.join("-")} → ${curStreak} (phá vỡ!)`;
+      }
+    }
 
-    // --- Bệt đảo ---
+    // ========== CẦU ĐÔI: Pattern A-B lặp lại ==========
+    let cauDoi = false;
+    let cauDoiPattern = "";
+    if (streaks.length >= 6) {
+      const last6 = streaks.slice(-6);
+      const p1 = last6.slice(0, 2).map(s => s.count).join("-");
+      const p2 = last6.slice(2, 4).map(s => s.count).join("-");
+      const p3 = last6.slice(4, 6).map(s => s.count).join("-");
+      if (p1 === p2 && p2 === p3) {
+        cauDoi = true;
+        cauDoiPattern = p1;
+      } else if (p2 === p3) {
+        cauDoi = true;
+        cauDoiPattern = p2;
+      }
+    }
+
+    // ========== CẦU BA: Pattern A-B-C lặp lại ==========
+    let cauBa = false;
+    let cauBaPattern = "";
+    if (streaks.length >= 9) {
+      const g1 = streaks.slice(-9, -6).map(s => s.count).join("-");
+      const g2 = streaks.slice(-6, -3).map(s => s.count).join("-");
+      const g3 = streaks.slice(-3).map(s => s.count).join("-");
+      if (g1 === g2 && g2 === g3) {
+        cauBa = true;
+        cauBaPattern = g1;
+      }
+    }
+
+    // ========== BỆT ĐẢO NÂNG CAO ==========
     const betDao = streaks.length >= 3 && (() => {
       const cur = streaks[streaks.length - 1];
       const mid = streaks[streaks.length - 2];
       const prev = streaks[streaks.length - 3];
       if (prev.count >= 3 && mid.count === 1 && cur.value === prev.value && cur.count >= 2)
         return { match: true, prevLen: prev.count };
+      // Bệt đảo kép: ...TTTT X TTTT X TTTT
+      if (streaks.length >= 5) {
+        const s5 = streaks.slice(-5);
+        if (s5[0].count >= 3 && s5[1].count === 1 && s5[2].count >= 3 && s5[3].count === 1 && s5[4].value === s5[0].value) {
+          return { match: true, prevLen: s5[2].count, double: true };
+        }
+      }
       return { match: false, prevLen: 0 };
     })();
 
-    // --- BẪY CẦU: phát hiện khi nhịp ổn định bất ngờ bị phá ---
+    // ========== BẪY CẦU NÂNG CAO ==========
     let trapDetected = false;
     let trapWarn = "";
     if (streaks.length >= 5) {
       const recent5 = streaks.slice(-5);
       const counts = recent5.map(s => s.count);
-      // Nhịp ổn định rồi bất ngờ thay đổi
       const stable = counts.slice(0, 3);
       const stableAvg = stable.reduce((a, b) => a + b, 0) / 3;
       const lastTwo = counts.slice(3);
@@ -138,34 +218,103 @@ export default function LC79Game() {
           trapWarn = `🪤 BẪY CẦU: Nhịp ${stable.join("-")} bị phá → ${lastTwo.join("-")}`;
         }
       }
+      // Bẫy cầu kiểu "cho ngon rồi quật": nhiều streak ngắn rồi bất ngờ streak dài
+      if (counts.slice(0, 4).every(c => c <= 2) && counts[4] >= 5) {
+        trapDetected = true;
+        trapWarn = `🪤 BẪY SẬP: ${counts.slice(0, 4).join("-")} → BỆT ${counts[4]}!`;
+      }
     }
 
-    // --- Cầu xoắn: nhịp tăng dần hoặc giảm dần ---
+    // ========== WHIPSAW NÂNG CAO ==========
+    let whipsaw = false;
+    let whipsawCount = 0;
+    if (streaks.length >= 4) {
+      const last4 = streaks.slice(-4);
+      whipsawCount = last4.filter(s => s.count === 1).length;
+      if (whipsawCount >= 3) whipsaw = true;
+    }
+
+    // ========== CẦU XOẮN ==========
     let spiralWarn = "";
+    let spiralType: "inc" | "dec" | "chaos" | null = null;
     if (streaks.length >= 4) {
       const rc = streaks.slice(-4).map(s => s.count);
       const inc = rc.every((v, i) => i === 0 || v >= rc[i - 1]);
       const dec = rc.every((v, i) => i === 0 || v <= rc[i - 1]);
-      if (inc && rc[3] >= 4) spiralWarn = "🌀 Cầu xoắn TĂNG: " + rc.join("→");
-      else if (dec && rc[0] >= 4) spiralWarn = "🌀 Cầu xoắn GIẢM: " + rc.join("→");
+      if (inc && rc[3] >= 3) { spiralWarn = "🌀 Cầu xoắn TĂNG: " + rc.join("→"); spiralType = "inc"; }
+      else if (dec && rc[0] >= 3) { spiralWarn = "🌀 Cầu xoắn GIẢM: " + rc.join("→"); spiralType = "dec"; }
       else {
         const avg = rc.reduce((a, b) => a + b, 0) / 4;
         const vari = rc.reduce((a, b) => a + (b - avg) ** 2, 0) / 4;
-        if (vari > 3) spiralWarn = "⚡ Nhịp hỗn loạn: " + rc.join("-");
+        if (vari > 3) { spiralWarn = "⚡ Nhịp hỗn loạn: " + rc.join("-"); spiralType = "chaos"; }
       }
     }
 
-    // --- Cầu nghiêng ---
-    const cauNghieng = tR12 >= 0.75 ? "T" : tR12 <= 0.25 ? "X" : null;
+    // ========== CẦU NGHIÊNG ĐA TẦNG ==========
+    const cauNghieng12 = tR12 >= 0.75 ? "T" : tR12 <= 0.25 ? "X" : null;
+    const cauNghieng8 = tR8 >= 0.8 ? "T" : tR8 <= 0.2 ? "X" : null;
+    const cauNghiengDouble = cauNghieng12 && cauNghieng8 && cauNghieng12 === cauNghieng8;
 
-    // --- Phát hiện đảo chiều nhanh (whipsaw) ---
-    let whipsaw = false;
-    if (streaks.length >= 4) {
-      const last4 = streaks.slice(-4);
-      if (last4.every(s => s.count === 1)) {
-        whipsaw = true;
-      }
+    // ========== TÍNH ĐIỂM WEIGHTED SCORING ==========
+    // Mỗi tín hiệu có trọng số, tổng hợp để ra quyết định cuối
+    interface Signal { dir: string; weight: number; name: string; }
+    const signals: Signal[] = [];
+
+    // Tín hiệu nhịp cầu
+    if (isR1) signals.push({ dir: opp(last), weight: r1_10 ? 30 : r1_8 ? 25 : r1_6 ? 20 : 15, name: "Nhịp 1-1" });
+    if (isR2) signals.push({ dir: curStreak < 2 ? last : opp(last), weight: 22, name: "Nhịp 2-2" });
+    if (isR3) signals.push({ dir: curStreak < 3 ? last : opp(last), weight: 24, name: "Nhịp 3-3" });
+    if (isR4) signals.push({ dir: curStreak < 4 ? last : opp(last), weight: 22, name: "Nhịp 4-4" });
+    if (isR5) signals.push({ dir: curStreak < 5 ? last : opp(last), weight: 20, name: "Nhịp 5-5" });
+
+    // Tín hiệu cầu đôi/ba
+    if (cauDoi) {
+      const parts = cauDoiPattern.split("-").map(Number);
+      const expectedLen = parts[streaks.length % 2 === 0 ? 0 : 1] ?? parts[0];
+      signals.push({ dir: curStreak < expectedLen ? last : opp(last), weight: 18, name: `Cầu đôi ${cauDoiPattern}` });
     }
+    if (cauBa) signals.push({ dir: curStreak < (Number(cauBaPattern.split("-")[streaks.length % 3]) || 2) ? last : opp(last), weight: 20, name: `Cầu ba ${cauBaPattern}` });
+
+    // Tín hiệu bệt
+    if (curStreak >= 8) signals.push({ dir: opp(last), weight: 8, name: "Bệt siêu dài" });
+    else if (curStreak >= 6) signals.push({ dir: opp(last), weight: 12, name: "Bệt cực dài" });
+    else if (curStreak >= 4) {
+      const breakProb = curStreak >= avgStreak * 1.3;
+      signals.push({ dir: opp(last), weight: breakProb ? 16 : 10, name: `Bệt ${curStreak}` });
+    }
+
+    // Tín hiệu momentum
+    if (momStrength > 0.15) {
+      const momDir = momTotal > 0 ? "T" : "X";
+      signals.push({ dir: momDir, weight: Math.round(momStrength * 30), name: "Momentum" });
+    }
+
+    // Tín hiệu cầu nghiêng
+    if (cauNghiengDouble) {
+      signals.push({ dir: opp(cauNghieng12!), weight: 14, name: "Cầu nghiêng đôi" });
+    } else if (cauNghieng12) {
+      signals.push({ dir: opp(cauNghieng12), weight: 10, name: "Cầu nghiêng" });
+    }
+
+    // Fibonacci
+    if (isFibStreak) {
+      signals.push({ dir: curStreak < nextFib ? last : opp(last), weight: 8, name: "Fibonacci" });
+    }
+
+    // Spiral
+    if (spiralType === "inc") signals.push({ dir: last, weight: 6, name: "Xoắn tăng" });
+    else if (spiralType === "dec") signals.push({ dir: opp(last), weight: 8, name: "Xoắn giảm" });
+
+    // Divergence
+    if (divergence) {
+      const shortDir = momShort > 0 ? "T" : "X";
+      signals.push({ dir: shortDir, weight: 12, name: "Phân kỳ" });
+    }
+
+    // ========== TỔNG HỢP SIGNALS ==========
+    const taiScore = signals.filter(s => s.dir === "T").reduce((a, b) => a + b.weight, 0);
+    const xiuScore = signals.filter(s => s.dir === "X").reduce((a, b) => a + b.weight, 0);
+    const totalScore = taiScore + xiuScore;
 
     let prediction: string;
     let confidence: number;
@@ -174,188 +323,134 @@ export default function LC79Game() {
     let patternName = "";
     let suggestion = "";
 
-    // === ƯU TIÊN: 4-4 > 3-3 > 2-2 > 1-1 > Bệt đảo > Bệt dài > Bẫy cầu > Cầu nghiêng > Pattern ===
+    // Nếu có signals → dùng weighted scoring
+    if (totalScore > 0) {
+      const winDir = taiScore >= xiuScore ? "T" : "X";
+      prediction = toLabel(winDir);
+      const dominance = Math.max(taiScore, xiuScore) / totalScore;
+      confidence = Math.round(50 + dominance * 45); // 50-95
 
-    if (isR4) {
-      if (curStreak < 4) {
-        prediction = toLabel(last);
-        confidence = 90;
-        suggestion = "Theo nhịp 4-4, tiếp tục cùng chiều";
+      // Tìm signal mạnh nhất
+      const topSignal = signals.sort((a, b) => b.weight - a.weight)[0];
+      patternName = topSignal.name;
+
+      // Signal count agreement
+      const agreeCount = signals.filter(s => s.dir === winDir).length;
+      const totalSignals = signals.length;
+      const agreement = agreeCount / totalSignals;
+
+      if (agreement >= 0.8 && confidence >= 80) {
+        suggestion = `🎯 ${agreeCount}/${totalSignals} tín hiệu đồng thuận - MẠNH`;
+        riskLevel = "safe";
+      } else if (agreement >= 0.6) {
+        suggestion = `✅ ${agreeCount}/${totalSignals} tín hiệu đồng thuận`;
+        riskLevel = "safe";
+      } else if (agreement >= 0.4) {
+        suggestion = `⚠️ Tín hiệu chia rẽ ${agreeCount}/${totalSignals} - Cẩn thận`;
+        riskLevel = "caution";
+        confidence = Math.max(55, confidence - 5);
       } else {
-        prediction = toLabel(opp(last));
-        confidence = 88;
-        suggestion = "Nhịp 4-4 đạt đỉnh, đổi chiều";
+        suggestion = `🚨 Tín hiệu mâu thuẫn ${agreeCount}/${totalSignals} - KHÔNG NÊN CƯỢC`;
+        riskLevel = "danger";
+        confidence = Math.max(50, confidence - 10);
       }
-      patternName = `Nhịp 4-4`;
-      warning = `🔥🔥 Nhịp 4-4 phát hiện (${curStreak}/4)`;
-      riskLevel = "caution";
-    } else if (isR3) {
-      if (curStreak < 3) {
-        prediction = toLabel(last);
-        confidence = 93;
-        suggestion = "Theo nhịp 3-3, đánh cùng chiều";
-      } else {
-        prediction = toLabel(opp(last));
-        confidence = 91;
-        suggestion = "Nhịp 3 đạt, chuẩn bị bẻ";
-      }
-      patternName = `Nhịp 3-3`;
-      warning = `🔥 Nhịp 3-3 phát hiện (${curStreak}/3)`;
-      riskLevel = "safe";
-    } else if (isR2) {
-      if (curStreak < 2) {
-        prediction = toLabel(last);
-        confidence = 91;
-        suggestion = "Nhịp 2-2 ổn định, theo chiều";
-      } else {
-        prediction = toLabel(opp(last));
-        confidence = 89;
-        suggestion = "Nhịp 2 đạt, bẻ chiều";
-      }
-      patternName = `Nhịp 2-2`;
-      warning = `🔥 Nhịp 2-2 phát hiện (${curStreak}/2)`;
-      riskLevel = "safe";
-    } else if (isR1) {
-      prediction = toLabel(opp(last));
-      confidence = r1_8 ? 96 : r1_6 ? 94 : 90;
-      patternName = `Nhịp 1-1 luân phiên`;
-      warning = `🔥 Nhịp 1-1 luân phiên${r1_8 ? " (8 phiên!)" : ""}`;
-      riskLevel = "safe";
-      suggestion = "Luân phiên đều, đánh ngược phiên trước";
-    } else if (betDao && typeof betDao === "object" && betDao.match) {
-      const prevLen = betDao.prevLen;
-      if (curStreak < prevLen) {
-        prediction = toLabel(last);
-        confidence = 87;
-        warning = `🔄 Bệt đảo: Tiếp (${curStreak}/${prevLen})`;
-        suggestion = `Bệt đảo đang chạy, theo đến ${prevLen}`;
-      } else {
-        prediction = toLabel(opp(last));
-        confidence = 78;
-        warning = `🔄 Bệt đảo: Đạt ${curStreak} phiên - Có thể bẻ`;
-        suggestion = "Bệt đảo đạt mốc, cân nhắc bẻ";
-      }
-      patternName = "Bệt đảo";
-      riskLevel = "caution";
-    } else if (curStreak >= 8) {
-      prediction = toLabel(opp(last));
-      confidence = 55;
-      warning = `🚨🚨 BỆT SIÊU DÀI ${curStreak} phiên! CỰC KỲ NGUY HIỂM`;
-      patternName = "Bệt siêu dài";
-      riskLevel = "extreme";
-      suggestion = "DỪNG CƯỢC! Chờ bẻ cầu rõ ràng mới vào";
-    } else if (curStreak >= 6) {
+
+      // Top signals breakdown
+      const topNames = signals.sort((a, b) => b.weight - a.weight).slice(0, 3).map(s => `${s.name}(${s.dir === "T" ? "T" : "X"})`);
+      warning = `🧠 ${topNames.join(" | ")}`;
+    } else {
+      // Fallback cơ bản
       prediction = toLabel(opp(last));
       confidence = 58;
-      warning = `🚨 BỆT CỰC DÀI ${curStreak} phiên! RẤT NGUY HIỂM`;
-      patternName = "Bệt cực dài";
-      riskLevel = "danger";
-      suggestion = "Hạn chế cược, chờ tín hiệu bẻ";
-    } else if (curStreak >= 5) {
-      const breakLikely = curStreak >= avgStreak * 1.5;
-      prediction = toLabel(opp(last));
-      confidence = breakLikely ? 75 : 62;
-      warning = `🚨 Bệt dài ${curStreak}!${breakLikely ? " Vượt TB - Bẻ CAO" : " CẨN THẬN"}`;
-      patternName = "Bệt dài";
-      riskLevel = "danger";
-      suggestion = breakLikely ? "Vượt TB, khả năng bẻ cao" : "Cẩn thận, có thể tiếp bệt";
-    } else if (curStreak === 4) {
-      prediction = toLabel(opp(last));
-      confidence = curStreak >= avgStreak * 1.3 ? 73 : 65;
-      warning = `⚠️ Bệt ${curStreak} phiên${curStreak >= avgStreak * 1.3 ? " - Sắp bẻ" : ""}`;
-      patternName = "Bệt 4";
-      riskLevel = "caution";
-      suggestion = curStreak >= avgStreak * 1.3 ? "Gần TB bẻ, cân nhắc đánh ngược" : "Theo dõi thêm";
-    } else if (curStreak === 3) {
-      if (streaks.length >= 2 && streaks[streaks.length - 2].count === 3) {
-        prediction = toLabel(last);
-        confidence = 80;
-        warning = "🔥 Có thể hình thành nhịp 3-3";
-        patternName = "Nhịp 3-3 đang hình thành";
-        suggestion = "Nếu nhịp 3-3, tiếp cùng chiều... KHÔNG, đã đủ 3 → bẻ";
-        // Đã đủ 3 như streak trước → bẻ
-        prediction = toLabel(opp(last));
-        confidence = 82;
-        suggestion = "Nhịp 3-3: streak trước = 3, streak này = 3 → BẺ";
-      } else {
-        prediction = toLabel(opp(last));
-        confidence = 70;
-        warning = `⚠️ Chuỗi 3 - Có thể đổi chiều`;
-        patternName = "Chuỗi 3";
-        suggestion = "Chuỗi 3 thường bẻ, cân nhắc ngược";
-      }
-      riskLevel = "caution";
-    } else if (trapDetected) {
-      prediction = toLabel(opp(last));
-      confidence = 65;
-      warning = trapWarn;
-      patternName = "Bẫy cầu";
-      riskLevel = "danger";
-      suggestion = "Cầu bị phá nhịp! Giảm mức cược, quan sát";
-    } else if (cauNghieng) {
-      prediction = toLabel(opp(cauNghieng));
-      confidence = 72;
-      warning = `📐 Cầu nghiêng ${toLabel(cauNghieng)} (${Math.round((cauNghieng === "T" ? tR12 : 1 - tR12) * 100)}%)`;
-      patternName = "Cầu nghiêng";
-      riskLevel = "caution";
-      suggestion = `Cầu nghiêng nặng về ${toLabel(cauNghieng)}, đánh ngược`;
-    } else {
-      if (streaks.length >= 2) {
-        const prev = streaks[streaks.length - 2];
-        if (prev.count === curStreak && prev.value !== last) {
-          prediction = toLabel(opp(last));
-          confidence = 72;
-          warning = `📊 Pattern lặp ${prev.count}-${curStreak}`;
-          patternName = "Pattern lặp";
-          suggestion = "Lặp pattern, đánh theo quy luật";
-        } else if (curStreak < avgStreak) {
-          prediction = toLabel(last);
-          confidence = 66;
-          patternName = "Chưa đạt TB";
-          suggestion = "Streak chưa đạt TB, tiếp cùng chiều";
-        } else {
-          prediction = toLabel(opp(last));
-          confidence = 66;
-          patternName = "Đạt TB";
-          suggestion = "Đạt TB streak, cân nhắc bẻ";
-        }
-      } else {
-        prediction = toLabel(opp(last));
-        confidence = 60;
-        patternName = "Cơ bản";
-      }
-      riskLevel = whipsaw ? "caution" : "safe";
+      patternName = "Phân tích cơ bản";
+      suggestion = "Chưa đủ tín hiệu rõ ràng";
     }
 
-    // --- Cảnh báo bổ sung ---
+    // ========== OVERRIDE: Các trường hợp đặc biệt ==========
+
+    // Bệt siêu dài → extreme
+    if (curStreak >= 8) {
+      riskLevel = "extreme";
+      suggestion = "🚨 DỪNG CƯỢC! Bệt " + curStreak + " phiên - Chờ bẻ rõ";
+    } else if (curStreak >= 6) {
+      riskLevel = "danger";
+    }
+
+    // Bẫy cầu → tăng risk
+    if (trapDetected) {
+      if (riskLevel === "safe") riskLevel = "caution";
+      else if (riskLevel === "caution") riskLevel = "danger";
+    }
+
+    // Cầu gãy → cảnh báo mạnh
+    if (cauGay) {
+      if (riskLevel === "safe") riskLevel = "caution";
+    }
+
+    // ========== COMPILE WARNINGS ==========
     const warnings: string[] = [];
     if (warning) warnings.push(warning);
-    if (spiralWarn) { warnings.push(spiralWarn); confidence = Math.max(55, confidence - 3); }
-    if (trapDetected && !warning?.includes("BẪY")) { warnings.push(trapWarn); confidence = Math.max(55, confidence - 5); }
-    if (whipsaw && !isR1) { warnings.push("⚡ Đảo chiều liên tục - WHIPSAW"); riskLevel = "caution"; }
 
-    // Momentum adjustment
-    if (momentumStrength > 0.3) {
-      const momDir = momentum > 0 ? "T" : "X";
-      warnings.push(`📈 Momentum mạnh: ${toLabel(momDir)} (${Math.round(momentumStrength * 100)}%)`);
-      if ((prediction === "TÀI" && momDir === "T") || (prediction === "XỈU" && momDir === "X")) {
-        confidence = Math.min(98, confidence + 3);
-      }
+    // Nhịp cầu chính
+    if (isR1) warnings.push(`🔥 Nhịp 1-1 luân phiên${r1_10 ? " (10 phiên!)" : r1_8 ? " (8 phiên)" : ""}`);
+    if (isR2) warnings.push(`🔥 Nhịp 2-2 (${curStreak}/2)`);
+    if (isR3) warnings.push(`🔥 Nhịp 3-3 (${curStreak}/3)`);
+    if (isR4) warnings.push(`🔥🔥 Nhịp 4-4 (${curStreak}/4)`);
+    if (isR5) warnings.push(`🔥🔥🔥 Nhịp 5-5 (${curStreak}/5) HIẾM!`);
+
+    // Pattern nâng cao
+    if (cauDoi) warnings.push(`🔗 Cầu đôi: ${cauDoiPattern} lặp lại`);
+    if (cauBa) warnings.push(`🔗🔗 Cầu ba: ${cauBaPattern} HIẾM`);
+    if (cauGay) warnings.push(cauGayWarn);
+    if (trapDetected) warnings.push(trapWarn);
+    if (spiralWarn) warnings.push(spiralWarn);
+    if (divWarn) warnings.push(divWarn);
+    if (whipsaw) warnings.push(`⚡ WHIPSAW: ${whipsawCount}/4 đảo chiều liên tục`);
+    if (isFibStreak) warnings.push(`🔢 Fibonacci streak: ${streaks.slice(-2).map(s => s.count).join("→")} (next: ${nextFib})`);
+
+    // Bệt cảnh báo
+    if (curStreak >= 8) warnings.push(`🚨🚨 BỆT SIÊU DÀI ${curStreak} phiên! CỰC KỲ NGUY HIỂM`);
+    else if (curStreak >= 6) warnings.push(`🚨 BỆT CỰC DÀI ${curStreak}! TB bẻ: ${avgStreak.toFixed(1)} | Max: ${maxStreak}`);
+    else if (curStreak >= 4) warnings.push(`⚠️ Bệt ${curStreak} | TB: ${avgStreak.toFixed(1)} | Median: ${medianStreak}`);
+
+    // Cầu nghiêng
+    if (cauNghiengDouble) {
+      warnings.push(`📐📐 Cầu nghiêng ĐÔI ${toLabel(cauNghieng12!)} (8p: ${Math.round(tR8 * 100)}% | 12p: ${Math.round(tR12 * 100)}%)`);
+    } else if (cauNghieng12) {
+      warnings.push(`📐 Cầu nghiêng ${toLabel(cauNghieng12)} (${Math.round((cauNghieng12 === "T" ? tR12 : 1 - tR12) * 100)}%)`);
     }
 
-    // Tỉ lệ TÀI/XỈU gần đây
+    // Momentum
+    if (momStrength > 0.15) {
+      const dir = momTotal > 0 ? "TÀI" : "XỈU";
+      warnings.push(`📈 Momentum: ${dir} ${momStrength > 0.3 ? "MẠNH" : ""} (${Math.round(momStrength * 100)}%)`);
+    }
+
+    // Thống kê
     if (len >= 8) {
-      const taiPct = Math.round(tR8 * 100);
-      warnings.push(`📊 8 phiên: TÀI ${taiPct}% | XỈU ${100 - taiPct}%`);
+      warnings.push(`📊 Tỉ lệ gần: 5p=${Math.round(tR5 * 100)}T | 8p=${Math.round(tR8 * 100)}T | 12p=${Math.round(tR12 * 100)}T`);
+    }
+
+    // Streak DNA
+    if (streaks.length >= 4) {
+      warnings.push(`🧬 DNA: ${streakDNA}`);
+    }
+
+    // BetDao
+    if (betDao && typeof betDao === "object" && betDao.match) {
+      const d = betDao as { match: boolean; prevLen: number; double?: boolean };
+      warnings.push(`🔄 Bệt đảo${d.double ? " KÉP" : ""}: (${curStreak}/${d.prevLen})`);
     }
 
     return {
       prediction,
-      confidence: Math.min(98, confidence),
+      confidence: Math.min(98, Math.max(50, confidence)),
       warning: warnings.join("\n"),
       riskLevel,
       patternName,
       suggestion,
+      streakDNA: dnaShort,
+      winRate: len >= 5 ? Math.round(tR12 * 100) : undefined,
     };
   };
 
@@ -439,9 +534,9 @@ export default function LC79Game() {
   const nextSessionId = betting?.phien_cuoc ?? (phienId ? phienId + 1 : null);
 
   const prediction = (() => {
-    if (history.length < 1) return { result: "…", percent: 0, warning: undefined as string | undefined, riskLevel: "safe" as const, patternName: "", suggestion: "" };
+    if (history.length < 1) return { result: "…", percent: 0, warning: undefined as string | undefined, riskLevel: "safe" as const, patternName: "", suggestion: "", streakDNA: "", winRate: undefined as number | undefined };
     const analysis = analyzePattern(history);
-    return { result: analysis.prediction, percent: analysis.confidence, warning: analysis.warning, riskLevel: analysis.riskLevel ?? "safe", patternName: analysis.patternName ?? "", suggestion: analysis.suggestion ?? "" };
+    return { result: analysis.prediction, percent: analysis.confidence, warning: analysis.warning, riskLevel: analysis.riskLevel ?? "safe", patternName: analysis.patternName ?? "", suggestion: analysis.suggestion ?? "", streakDNA: analysis.streakDNA ?? "", winRate: analysis.winRate };
   })();
 
   return (
@@ -590,7 +685,15 @@ export default function LC79Game() {
               }} />
             </div>
 
-            <div className="text-[10px] mt-1" style={{ color: "#666" }}>🟢 Đã đồng bộ game | 📊 {history.length} phiên</div>
+            <div className="text-[10px] mt-1 flex justify-between" style={{ color: "#666" }}>
+              <span>🟢 Đã đồng bộ | 📊 {history.length}p</span>
+              {prediction.streakDNA && <span style={{ color: "#555" }}>🧬 {prediction.streakDNA}</span>}
+            </div>
+            {prediction.winRate !== undefined && (
+              <div className="text-[9px] mt-0.5" style={{ color: "#555" }}>
+                TÀI: {prediction.winRate}% | XỈU: {100 - prediction.winRate}% (12p)
+              </div>
+            )}
           </>
         ) : null}
       </RobotBubble>
