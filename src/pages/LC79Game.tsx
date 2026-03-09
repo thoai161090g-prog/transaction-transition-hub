@@ -498,17 +498,27 @@ export default function LC79Game() {
         setHistory(newHistory);
         lastSessionRef.current = phienId;
 
-        if (user && newHistory.length >= 1) {
-          const analysis = analyzePattern(newHistory);
-          await supabase.from("analysis_history").insert({
+        // Lưu vào DB
+        if (user) {
+          await supabase.from("game_history").upsert({
             user_id: user.id,
             game: "LC79",
-            md5_input: `Phiên #${apiResult.betting_info?.phien_cuoc ?? phienId + 1} (dự đoán)`,
-            result: analysis.prediction === "TÀI" ? "Tài" : "Xỉu",
-            tai_percent: analysis.prediction === "TÀI" ? analysis.confidence : 100 - analysis.confidence,
-            xiu_percent: analysis.prediction === "TÀI" ? 100 - analysis.confidence : analysis.confidence,
-            confidence: analysis.confidence,
-          });
+            phien: phienId,
+            result: currentResult,
+          }, { onConflict: "user_id,game,phien" }).then(() => {});
+
+          if (newHistory.length >= 1) {
+            const analysis = analyzePattern(newHistory);
+            await supabase.from("analysis_history").insert({
+              user_id: user.id,
+              game: "LC79",
+              md5_input: `Phiên #${apiResult.betting_info?.phien_cuoc ?? phienId + 1} (dự đoán)`,
+              result: analysis.prediction === "TÀI" ? "Tài" : "Xỉu",
+              tai_percent: analysis.prediction === "TÀI" ? analysis.confidence : 100 - analysis.confidence,
+              xiu_percent: analysis.prediction === "TÀI" ? 100 - analysis.confidence : analysis.confidence,
+              confidence: analysis.confidence,
+            });
+          }
         }
       }
     } catch {
