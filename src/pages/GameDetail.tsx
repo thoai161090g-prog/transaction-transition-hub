@@ -188,34 +188,66 @@ export default function GameDetail() {
         >
           {sunwinLoading ? (
             <>
-              <span className="font-bold" style={{ color: "#ffd700" }}>🤖 Robot SUNWIN</span><br />
+              <span className="font-bold" style={{ color: "#ffd700" }}>🤖 Robot SUNWIN <span style={{ color: "#ff8c00" }}>V3</span></span><br />
               <span style={{ color: "#4db8ff" }}>🔄 Đang kết nối API...</span>
             </>
           ) : sunwinError ? (
             <>
-              <span className="font-bold" style={{ color: "#ffd700" }}>🤖 Robot SUNWIN</span><br />
+              <span className="font-bold" style={{ color: "#ffd700" }}>🤖 Robot SUNWIN V3</span><br />
               <span style={{ color: "#ff3b5c" }}>🔴 Không lấy được dữ liệu</span>
               <div style={{ fontSize: 12, color: "#aaa", marginTop: 6 }}>Kiểm tra lại API</div>
             </>
           ) : sunwinData ? (
             <>
-              <div className="font-bold mb-1" style={{ color: "#ffd700", fontSize: 11 }}>🤖 Robot SUNWIN</div>
-              🎯 Phiên tiếp: <span style={{ color: "#4db8ff", fontWeight: "bold" }}>{sunwinData.session}</span><br /><br />
-              🤖 Dự đoán:<br />
+              <div className="font-bold mb-1" style={{ color: "#ffd700", fontSize: 11 }}>🤖 Robot SUNWIN <span style={{ color: "#ff8c00" }}>V3</span></div>
+              🎯 Phiên tiếp: <span style={{ color: "#4db8ff", fontWeight: "bold" }}>{sunwinData.session}</span><br />
+              
+              {sunwinData.patternName && (
+                <div className="text-[9px] my-1" style={{ color: "#e0b0ff" }}>⚙️ {sunwinData.patternName}</div>
+              )}
+              
+              🤖 Dự đoán V3:<br />
               <span style={{
                 color: sunwinData.result === "TÀI" ? "#00ff99" : "#ff3b5c",
                 fontWeight: "bold",
-                fontSize: 14,
+                fontSize: 16,
+                textShadow: sunwinData.result === "TÀI" ? "0 0 10px rgba(0,255,153,0.6)" : "0 0 10px rgba(255,59,92,0.6)",
               }}>
                 {sunwinData.result}
-              </span><br /><br />
-              📊 Độ tin cậy: <span style={{ color: "#ffd966", fontWeight: "bold", fontSize: 13 }}>{sunwinData.percent}%</span>
-              {sunwinData.warning && (
-                <div style={{ fontSize: 9, color: sunwinData.warning.includes("Bệt") ? "#ff3b5c" : "#ffd700", marginTop: 4 }}>
-                  {sunwinData.warning}
+              </span><br />
+              
+              📊 Độ tin cậy: <span style={{ 
+                color: sunwinData.percent >= 85 ? "#00ff99" : sunwinData.percent >= 70 ? "#ffd966" : "#ff6b6b", 
+                fontWeight: "bold", 
+                fontSize: 13 
+              }}>{sunwinData.percent}%</span>
+              
+              {sunwinData.suggestion && (
+                <div className="text-[9px] mt-1" style={{ color: sunwinData.riskLevel === "extreme" ? "#ff3b5c" : sunwinData.riskLevel === "danger" ? "#ff6b6b" : "#ffd700" }}>
+                  {sunwinData.suggestion}
                 </div>
               )}
-              <div style={{ fontSize: 9, color: "#aaa", marginTop: 4 }}>📈 Lịch sử: {historyRef.current.slice(-8).join(" ")}</div>
+              
+              {sunwinData.warning && (
+                <div className="text-[8px] mt-1 max-h-[45px] overflow-y-auto" style={{ color: "#aaa", lineHeight: 1.3 }}>
+                  {sunwinData.warning.split("\n").slice(0, 3).map((w, i) => (
+                    <div key={i}>{w}</div>
+                  ))}
+                </div>
+              )}
+              
+              <div className="flex gap-0.5 flex-wrap mt-1 pt-1" style={{ borderTop: "1px solid rgba(255,255,255,0.1)" }}>
+                {historyRef.current.slice(-12).map((h, i) => (
+                  <div key={i} className="w-2.5 h-2.5 rounded-full" style={{
+                    background: h === "T" ? "#00ff99" : "#ff3b5c",
+                    boxShadow: h === "T" ? "0 0 3px #00ff99" : "0 0 3px #ff3b5c",
+                  }} />
+                ))}
+              </div>
+              
+              {sunwinData.streakDNA && (
+                <div style={{ fontSize: 8, color: "#888", marginTop: 4 }}>🧬 DNA: {sunwinData.streakDNA} | {historyRef.current.length} phiên</div>
+              )}
             </>
           ) : null}
         </RobotBubble>
