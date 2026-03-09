@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { GAMES, analyzeMD5 } from "@/lib/md5-analyzer";
 import { useToast } from "@/hooks/use-toast";
+import RobotBubble from "@/components/RobotBubble";
 
 interface SunwinApiResult {
   session: string | number;
